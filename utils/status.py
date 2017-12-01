@@ -42,7 +42,7 @@ class Status:
             val: Any kind of serializable value.
         """
         status = cls()
-        status.status = Status.ID_OK
+        status.status = cls.ID_OK
         status.payload = val
 
         return status
@@ -58,7 +58,7 @@ class Status:
             val: Any kind of serializable value.
         """
         status = cls()
-        status.status = Status.ID_ERR
+        status.status = cls.ID_ERR
         status.payload = val
 
         return status
@@ -76,11 +76,11 @@ class Status:
             an error will be raised aswell.
         """
 
-        data = {Status.ID_STATUS: self.status, Status.ID_PAYLOAD: self.payload}
+        data = {self.ID_STATUS: self.status, self.ID_PAYLOAD: self.payload}
         return json.dumps(data)
 
-    @staticmethod
-    def from_json(data):
+    @classmethod
+    def from_json(cls, data):
         """
         Tries to create a status from a response.
 
@@ -99,12 +99,12 @@ class Status:
         json_data = json.loads(data)
 
         try:
-            status = json_data[Status.ID_STATUS]
+            status = json_data[cls.ID_STATUS]
 
-            if status == Status.ID_OK:
-                return Status.ok(json_data[Status.ID_PAYLOAD])
-            elif status == Status.ID_ERR:
-                return Status.err(json_data[Status.ID_PAYLOAD])
+            if status == cls.ID_OK:
+                return cls.ok(json_data[cls.ID_PAYLOAD])
+            elif status == cls.ID_ERR:
+                return cls.err(json_data[cls.ID_PAYLOAD])
             else:
                 raise FormatError("Missing status field in Status.")
 

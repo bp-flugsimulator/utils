@@ -114,11 +114,11 @@ class Command:
         -------
             A json string.
         """
-        data = {Command.ID_COMMAND: self.func, Command.ID_ARGS: self.args}
+        data = {self.ID_COMMAND: self.func, self.ID_ARGS: self.args}
         return json.dumps(data)
 
-    @staticmethod
-    def from_json(data):
+    @classmethod
+    def from_json(cls, data):
         """
         Tries to parse a json object from the given data
         and tries to map the json entries to a valid command.
@@ -138,18 +138,17 @@ class Command:
         """
         json_data = json.loads(data)
         try:
-            if not isinstance(json_data[Command.ID_ARGS], dict):
+            if not isinstance(json_data[cls.ID_ARGS], dict):
                 raise ProtocolError("Args has to be a dictionary.")
 
-            if not isinstance(json_data[Command.ID_COMMAND], str):
+            if not isinstance(json_data[cls.ID_COMMAND], str):
                 raise ProtocolError("Command has to be a string.")
 
-            for k, _ in json_data[Command.ID_ARGS]:
+            for k, _ in json_data[cls.ID_ARGS]:
                 if not isinstance(k, str):
                     raise ProtocolError("Wrong format for key in arguments.")
 
-            return Command(json_data[Command.ID_COMMAND],
-                           **json_data[Command.ID_ARGS])
+            return cls(json_data[cls.ID_COMMAND], **json_data[cls.ID_ARGS])
         except KeyError as err:
             raise ProtocolError(
                 "The given json object has (a) missing key(s). ({})".format(
