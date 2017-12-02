@@ -68,7 +68,8 @@ class Rpc:
     methods = []
     method = method_wrapper(methods)
 
-    def get(self, func):
+    @staticmethod
+    def get(func):
         """
         Searches for a function in the internal list.
 
@@ -82,7 +83,7 @@ class Rpc:
             was found. Returns None if no function was found.
 
         """
-        for method in self.methods:
+        for method in Rpc.methods:
             if method.__name__ == func:
                 return method
         return None
@@ -144,8 +145,10 @@ class Command:
             if not isinstance(json_data[cls.ID_COMMAND], str):
                 raise ProtocolError("Command has to be a string.")
 
-            for k, _ in json_data[cls.ID_ARGS]:
-                if not isinstance(k, str):
+            print(json_data)
+
+            for key in json_data[cls.ID_ARGS].keys():
+                if not isinstance(key, str):
                     raise ProtocolError("Wrong format for key in arguments.")
 
             return cls(json_data[cls.ID_COMMAND], **json_data[cls.ID_ARGS])
@@ -162,40 +165,81 @@ class RpcReceiver:
     and excutes them.
     """
 
-    def __init__(self, url):
-        self._url = url
+    def __init__(self, listen, send):
+        self._listen = listen
+        self._send = send
+
+        self.listen_connection = websockets.connect(self.listen)
+        self.sender_connection = websockets.connect(self.send)
+        self.sender_session = None
+        self.listen_session = None
+        self.closed = False
 
     @property
-    def url(self):
+    def send(self):
         """
-        Returns the url which was given in the constructor.
+        Returns the url on which this client send
+        it's notifications.
 
         Returns
         -------
             A given url.
         """
-        return self._url
+        return self._send
+
+    @property
+    def listen(self):
+        """
+        Returns the url on which this client listens on.
+
+        Returns
+        -------
+            A given url.
+        """
+        return self._listen
+
+    def close(self):
+        """
+        Close the connections to the servers.
+        """
+        self.closed = True
+        self.sender_session.close()
+        self.listen_session.close()
 
     @asyncio.coroutine
     def run(self, callback):
         """
         Listens to the specified address and reads the stream.
         If a package was received it will be encoded and tried
-        to executed. The result will be pushed into the callback
-        function.
+        to executed. The send stream and the result will be
+        pushed into the callback function.
 
         Arguments
         ---------
-            callback: a function witch takes an result
+            callback: a function witch takes a send stream and a result
+            stop: a event which is called when a signal received
 
         """
-        session = yield from websockets.connect('ws://' + self.url)
-        data = yield from session.recv()
-        try:
-            cmd = Command.from_json(data)
-            res = yield from asyncio.coroutine(cmd.func)(**cmd.args)
-            result = Status.ok(res)
-        except ReceiverError as err:
-            result = Status.err(str(err))
+        self.sender_session = yield from self.sender_connection
+        self.listen_session = yield from self.listen_connection
 
-        yield from callback(result)
+        try:
+            while not self.closed:
+                data = yield from self.listen_session.recv()
+                try:
+                    cmd = Command.from_json(data)
+                    callable_command = Rpc.get(cmd.func)
+                    res = yield from asyncio.coroutine(callable_command)(
+                        **cmd.args)
+                    result = Status.ok(res)
+                except ReceiverError as err:
+                    result = Status.err(str(err))
+
+                yield from callback(self.sender_session, result)
+
+        except websockets.exceptions.ConnectionClosed as err:
+            if err.code != 1000:
+                raise err
+        finally:
+            yield from self.listen_session.close()
+            yield from self.sender_session.close()
