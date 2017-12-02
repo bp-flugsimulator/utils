@@ -53,6 +53,11 @@ def method_wrapper(method_list):
         appends the new functions to the internal
         list.
         """
+        for fun in method_list:
+            if fun.__name__ == func.__name__:
+                raise ValueError(
+                    "Only functions with unique names are allowed.")
+
         method_list.append(func)
         return func
 
@@ -90,6 +95,13 @@ class Rpc:
 
     def __iter__(self):
         return self.methods.__iter__()
+
+    @staticmethod
+    def clear():
+        """
+        Removes all element in the method list.
+        """
+        Rpc.methods.clear()
 
 
 class Command:
