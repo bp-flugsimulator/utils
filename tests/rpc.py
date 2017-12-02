@@ -5,13 +5,12 @@ Test file for the rpc module.
 import unittest
 import asyncio
 import signal
-import websockets
 import time
 import os
-
 from multiprocessing import Process
-from utils.rpc import Rpc, RpcReceiver, Command
-from utils.status import Status
+
+import websockets
+from utils import Rpc, RpcReceiver, Command, Status
 
 
 class Server:
@@ -112,6 +111,14 @@ class TestRpc(unittest.TestCase):
     Testcases for the Rpc class.
     """
 
+    def assertIterateEqual(self, first, second):
+        """
+        Compares two iteratable objects if the order of
+        the items are the same.
+        """
+        for first_item, second_item in zip(first, second):
+            self.assertEqual(first_item, second_item)
+
     def setUp(self):
         Rpc.clear()
 
@@ -121,12 +128,10 @@ class TestRpc(unittest.TestCase):
         """
 
         @Rpc.method
-        def test(first):
+        def test(first):  #pylint: disable=W0613,C0111
             pass
 
-        for (x, y) in zip(Rpc(), [test]):
-            self.assertEqual(x, y)
-
+        self.assertIterateEqual(Rpc(), [test])
         self.assertEqual(Rpc.get("test"), test)
 
     def test_rpc_method_none(self):
@@ -134,9 +139,7 @@ class TestRpc(unittest.TestCase):
         Tests the output if none function was given.
         """
 
-        for (x, y) in zip(Rpc(), []):
-            self.assertEqual(x, y)
-
+        self.assertIterateEqual(Rpc(), [])
         self.assertEqual(Rpc.get("test"), None)
 
     def test_rpc_multiple(self):
@@ -145,16 +148,14 @@ class TestRpc(unittest.TestCase):
         """
 
         @Rpc.method
-        def test(first):
+        def test(first):  #pylint: disable=W0613,C0111
             pass
 
         @Rpc.method
-        def test2():
+        def test2():  #pylint: disable=C0111
             pass
 
-        for (x, y) in zip(Rpc(), [test, test2]):
-            self.assertEqual(x, y)
-
+        self.assertIterateEqual(Rpc(), [test, test2])
         self.assertEqual(Rpc.get("test"), test)
         self.assertEqual(Rpc.get("test2"), test2)
 
@@ -164,12 +165,12 @@ class TestRpc(unittest.TestCase):
         Test the output for functions with same names.
         """
 
-        class First:
+        class First:  #pylint: disable=R0903,C0111,W0612
             @Rpc.method
             def test(self):
                 pass
 
-        class Second:
+        class Second:  #pylint: disable=R0903,C0111,W0612
             @Rpc.method
             def test(self):
                 pass
@@ -303,4 +304,4 @@ class TestCommand(unittest.TestCase):
         """
         Uses positional arguments, which is not supported.
         """
-        Command("test_func", 2, "vier")
+        Command("test_func", 2, "vier")  #pylint: disable=E1121
