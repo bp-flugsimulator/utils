@@ -31,8 +31,11 @@ class Status:
         self.status = None
         self.payload = None
 
+    def __eq__(self, other):
+        return self.status == other.status and self.payload == other.payload
+
     @classmethod
-    def ok(cls, val):
+    def ok(cls, val):  #pylint: disable=C0103
         """
         This function creates a status which was
         sucessfull.
