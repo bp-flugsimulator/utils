@@ -3,7 +3,7 @@ Test file for the status module.
 """
 
 import unittest
-from utils import Status
+from utils.status import Status
 
 
 class TestStatus(unittest.TestCase):
