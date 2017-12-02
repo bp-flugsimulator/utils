@@ -28,7 +28,7 @@ setup(
     author="bp-flugsimulator",
     license="MIT",
     install_requires=get_requirements(),
-    python_requiers=">=3.4",
+    python_requires=">=3.4",
     py_modules=["rpc", "status"],
     packages=["utils"],
 )
