@@ -119,6 +119,9 @@ class Command:
         self.func = func
         self.args = kwargs
 
+    def __eq__(self, other):
+        return self.func == other.func and self.args == other.args
+
     def to_json(self):
         """
         Formats the command into a json string.
@@ -156,8 +159,6 @@ class Command:
 
             if not isinstance(json_data[cls.ID_COMMAND], str):
                 raise ProtocolError("Command has to be a string.")
-
-            print(json_data)
 
             for key in json_data[cls.ID_ARGS].keys():
                 if not isinstance(key, str):

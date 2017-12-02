@@ -15,6 +15,12 @@ from utils.status import Status
 
 
 class Server:
+    """
+    Represents a test server wich runs a websocket and
+    a set of sendable items and a set of items which
+    should be received.
+    """
+
     def __init__(self, send, output):
         self.send = send
         self.output = output
@@ -155,7 +161,7 @@ class TestRpc(unittest.TestCase):
     @unittest.expectedFailure
     def tets_rpc_multiple_same_name(self):
         """
-        Test the output for functions with the same name
+        Test the output for functions with same names.
         """
 
         class First:
@@ -285,7 +291,12 @@ class TestCommand(unittest.TestCase):
         """
         cmd = Command("test_func", a=2, b="vier")
         string = '{"command": "test_func", "args": {"a": 2, "b": "vier"}}'
-        self.assertEqual(cmd.to_json(), string)
+        cmd_string = Command.from_json(string)
+        cmd_new = Command.from_json(cmd.to_json())
+
+        self.assertEqual(cmd, cmd_string)
+        self.assertEqual(cmd, cmd_new)
+        self.assertEqual(cmd_string, cmd_new)
 
     @unittest.expectedFailure
     def test_command_with_args(self):
