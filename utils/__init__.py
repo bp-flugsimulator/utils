@@ -2,6 +2,9 @@
  Init file
 """
 
+from utils.rpc import *
+from utils.status import *
+
 import utils.rpc
 import utils.status
 
