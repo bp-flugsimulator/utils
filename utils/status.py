@@ -27,12 +27,58 @@ class Status:
     ID_STATUS = "status"
     ID_PAYLOAD = "payload"
 
-    def __init__(self):
-        self.status = None
-        self.payload = None
+    def __init__(self, status, payload):
+        if status != Status.ID_OK and status != Status.ID_ERR:
+            raise ValueError(
+                "Status only accept a string with `{}` or `{}`".format(
+                    Status.ID_OK, Status.ID_ERR))
+        else:
+            self._status = status
+            self._payload = payload
 
     def __eq__(self, other):
-        return self.status == other.status and self.payload == other.payload
+        return self.status() == other.status() and self.payload(
+        ) == other.payload()
+
+    def status(self):
+        """
+        Getter for status.
+
+        Returns
+        -------
+            string: a status
+        """
+        return self._status
+
+    def payload(self):
+        """
+        Getter for payload.
+
+        Returns
+        -------
+            object: a payload
+        """
+        return self._payload
+
+    def is_err(self):
+        """
+        Tests if the current status is an error status.
+
+        Returns
+        ------
+            boolean
+        """
+        return self.status() == Status.ID_ERR
+
+    def is_ok(self):
+        """
+        Tests if the current status is an error status.
+
+        Returns
+        ------
+            boolean
+        """
+        return self.status() == Status.ID_OK
 
     @classmethod
     def ok(cls, val):  #pylint: disable=C0103
@@ -44,11 +90,7 @@ class Status:
         ---------
             val: Any kind of serializable value.
         """
-        status = cls()
-        status.status = cls.ID_OK
-        status.payload = val
-
-        return status
+        return cls(cls.ID_OK, val)
 
     @classmethod
     def err(cls, val):
@@ -60,11 +102,7 @@ class Status:
         ---------
             val: Any kind of serializable value.
         """
-        status = cls()
-        status.status = cls.ID_ERR
-        status.payload = val
-
-        return status
+        return cls(cls.ID_ERR, val)
 
     def to_json(self):
         """
@@ -79,7 +117,7 @@ class Status:
             an error will be raised aswell.
         """
 
-        data = {self.ID_STATUS: self.status, self.ID_PAYLOAD: self.payload}
+        data = {self.ID_STATUS: self.status(), self.ID_PAYLOAD: self.payload()}
         return json.dumps(data)
 
     @classmethod
@@ -114,3 +152,65 @@ class Status:
         except KeyError as err:
             raise FormatError("Missing field in encode string. ({})".format(
                 err.args[0]))
+
+    @staticmethod
+    def as_js():
+        """
+        Returns a javascript class which has the same behvior and names
+        like the python class.
+        """
+        return """
+            class Status {{
+                constructor (status, payload) {{
+                    if (status != "{id_ok}" && status != "{id_err}") {{
+                        throw new TypeError("Status only accept a string with `{id_ok}` or `{id_err}`..");
+                    }} else {{
+                        this._{id_status} = status;
+                        this._{id_payload} = payload;
+                    }}
+                }}
+
+                equals(other) {{
+                    return this.{id_status} == other.{id_status} &&
+                        this.{id_payload} == other.{id_payload};
+                }}
+
+                get status() {{
+                    return this._{id_status};
+                }}
+
+                get payload() {{
+                    return this._{id_payload};
+                }}
+
+                is_ok() {{
+                    return this.{id_status} == "{id_ok}";
+                }}
+
+                is_err() {{
+                    return this.{id_status} == "{id_err}";
+                }}
+
+                static ok(payload) {{
+                    return new Status("{id_ok}", payload);
+                }}
+
+                static err(payload) {{
+                    return new Status("{id_err}", payload);
+                }}
+
+                to_json() {{
+                    return JSON.stringify({{ "{id_status}": this.status, "{id_payload}": this.payload }});
+                }}
+
+                static from_json(data) {{
+                    var json = JSON.parse(data);
+                    return new Status(json["{id_status}"], json["{id_payload}"]);
+                }}
+            }}
+        """.format(
+            id_ok=Status.ID_OK,
+            id_err=Status.ID_ERR,
+            id_status=Status.ID_STATUS,
+            id_payload=Status.ID_PAYLOAD,
+        )
