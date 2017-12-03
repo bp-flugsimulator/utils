@@ -1,7 +1,7 @@
 """
 Setup file for utils library.
 """
-from setuptools import setup
+from setuptools import setup, find_packages
 from pip.req import parse_requirements
 
 FULL_REQUIREMENTS = []
@@ -37,7 +37,7 @@ setup(
     install_requires=get_requirements("requirements.txt"),
     python_requires=">=3.4",
     py_modules=["rpc", "rpc_extra", "status"],
-    packages=["utils"],
+    packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
     extra_requires={
         "websockets": get_requirements("requirements_websockets.txt")
     },
