@@ -55,8 +55,11 @@ class RpcReceiver:
         Close the connections to the servers.
         """
         self.closed = True
-        self.sender_session.close()
-        self.listen_session.close()
+        try:
+            self.sender_session.close()
+            self.listen_session.close()
+        except:
+            pass
 
     @asyncio.coroutine
     def run(self, callback):
