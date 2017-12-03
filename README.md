@@ -6,3 +6,4 @@ Enthält utils die für den Client und den Server gebraucht werden
 # Todo
 - [ ] Testcases für websocket transport
 - [ ] Testcases für websocket mit Methoden ausführung.
+- [ ] Testcases für neue Status Methoden.
