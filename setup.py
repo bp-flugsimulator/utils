@@ -37,8 +37,9 @@ setup(
     install_requires=get_requirements("requirements.txt"),
     python_requires=">=3.4",
     py_modules=["rpc", "rpc_extra", "status"],
-    packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
-    extra_requires={
+    packages=find_packages(
+        exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
+    extras_require={
         "websockets": get_requirements("requirements_websockets.txt")
     },
     tests_require=FULL_REQUIREMENTS,
