@@ -4,6 +4,7 @@ Since websockets is a optional dependency.
 """
 import asyncio
 import websockets
+import logging
 
 __all__ = ["RpcReceiver"]
 
@@ -54,6 +55,7 @@ class RpcReceiver:
         """
         Close the connections to the servers.
         """
+        logging.debug("Got close call ... closing connections.")
         self.closed = True
         try:
             self.sender_session.close()
@@ -68,25 +70,35 @@ class RpcReceiver:
         if it is a valid command. The result will be send (notified)
         via the send connection.
         """
+
+        logging.debug("Connect to sender.")
         self.sender_session = yield from self.sender_connection
+        logging.debug("Connect to listener.")
         self.listen_session = yield from self.listen_connection
 
         try:
             while not self.closed:
+                logging.debug("Listen on command channel.")
                 data = yield from self.listen_session.recv()
                 try:
                     cmd = Command.from_json(data)
+                    logging.debug("Received command {}.".format(cmd))
                     callable_command = Rpc.get(cmd.func)
+                    logging.debug("Found correct function ... calling.")
                     res = yield from asyncio.coroutine(callable_command)(
                         **cmd.args)
                     result = Status.ok(res)
+                    logging.debug("Function returned {}.".format(result))
                 except ReceiverError as err:
                     result = Status.err(str(err))
+                    logging.debug("Function returned {}.".format(result))
 
                 yield from self.sender_session.send(result)
         except websockets.exceptions.ConnectionClosed as err:
+            logging.error(str(err))
             if err.code != 1000:
                 raise err
         finally:
+            logging.debug("Closing connections.")
             yield from self.listen_session.close()
             yield from self.sender_session.close()
