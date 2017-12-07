@@ -1,5 +1,5 @@
 """
- Init file
+Init file for utils library.
 """
 
 from utils.rpc import *

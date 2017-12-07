@@ -15,7 +15,7 @@ from utils import Rpc, RpcReceiver, Command, Status
 
 class Server:
     """
-    Represents a test server wich runs a websocket and
+    Represents a test server which runs a websocket and
     a set of sendable items and a set of items which
     should be received.
     """
@@ -29,7 +29,7 @@ class Server:
     def __enter__(self):
         def process():
             """
-            Reprensets the process
+            Represents the process
             """
 
             @asyncio.coroutine
@@ -39,14 +39,14 @@ class Server:
                 Arguments
                 ---------
                     stop: @coroutine which signals that the server should stop
-                Represents a proces which the websockets
+                Represents a process which the websockets
                 server runs on.
                 """
 
                 @asyncio.coroutine
                 def handle_consumer(websocket):
                     """
-                    Handles the incomming messages.
+                    Handles the incoming messages.
                     """
                     while True:
                         elm = yield from websocket.recv()
@@ -113,7 +113,7 @@ class TestRpc(unittest.TestCase):
 
     def assertIterateEqual(self, first, second):
         """
-        Compares two iteratable objects if the order of
+        Compares two iterable objects if the order of
         the items are the same.
         """
         for first_item, second_item in zip(first, second):

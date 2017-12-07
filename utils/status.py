@@ -96,7 +96,7 @@ class Status:
     def err(cls, val):
         """
         This function creates a status which was
-        not sucessfull.
+        not successful.
 
         Arguments
         ---------
@@ -114,7 +114,7 @@ class Status:
             ProtocolError if the status has no status attribute
             or no result attribute or not message attribute.
             If message and result is set at the same time
-            an error will be raised aswell.
+            an error will be raised as well.
         """
 
         data = {self.ID_STATUS: self.status(), self.ID_PAYLOAD: self.payload()}
@@ -156,7 +156,7 @@ class Status:
     @staticmethod
     def as_js():
         """
-        Returns a javascript class which has the same behvior and names
+        Returns a javascript class which has the same behavior and names
         like the python class.
         """
         return """

@@ -1,5 +1,5 @@
 """
-This module holds all classes which depdends on websockets.
+This module holds all classes which depends on websockets.
 Since websockets is a optional dependency.
 """
 import asyncio
@@ -14,7 +14,7 @@ class RpcReceiver:
     """
     Represents a client which connects via websockets to
     a websocket server. This client receives commands
-    and excutes them.
+    and executes them.
     """
 
     def __init__(self, listen, send):
