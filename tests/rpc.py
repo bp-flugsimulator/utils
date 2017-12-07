@@ -6,11 +6,14 @@ import unittest
 import asyncio
 import signal
 import time
+import json
 import os
-from multiprocessing import Process
+import subprocess
 
 import websockets
 from utils import Rpc, RpcReceiver, Command, Status
+
+# multiprocessing.set_start_method('spawn')
 
 
 class Server:
@@ -20,90 +23,24 @@ class Server:
     should be received.
     """
 
-    def __init__(self, send, output):
+    def __init__(self, send, output, loop):
         self.send = send
         self.output = output
-
+        self.loop = loop
         self.process = None
 
-    def __enter__(self):
-        def process():
-            """
-            Reprensets the process
-            """
+    def run(self):
+        py = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)), "server.py")
 
-            @asyncio.coroutine
-            def server(stop):
-                """
+        return asyncio.create_subprocess_exec(
+            py,
+            stdout=asyncio.subprocess.PIPE,
+            stdin=asyncio.subprocess.PIPE,
+        )
 
-                Arguments
-                ---------
-                    stop: @coroutine which signals that the server should stop
-                Represents a proces which the websockets
-                server runs on.
-                """
-
-                @asyncio.coroutine
-                def handle_consumer(websocket):
-                    """
-                    Handles the incomming messages.
-                    """
-                    while True:
-                        elm = yield from websocket.recv()
-                        self.output.remove(elm)
-
-                @asyncio.coroutine
-                def handle_producer(websocket):
-                    """
-                    Handles the outgoing messages.
-                    """
-                    for elm in self.send:
-                        yield from websocket.send(elm)
-
-                    while True:
-                        pass
-
-                @asyncio.coroutine
-                def handler(websocket, path):
-                    """
-                    Forwards all elements in the queue directly into the
-                    websocket.
-                    """
-                    if path == "/send_to_server":
-                        yield from handle_consumer(websocket)
-                    elif path == "/receive_from_server":
-                        yield from handle_producer(websocket)
-                    else:
-                        ValueError("path not registered.")
-
-                server_handle = yield from websockets.serve(
-                    handler, '0.0.0.0', 8750)
-                os.kill(os.getppid(), signal.SIGCONT)
-                yield from stop
-                server_handle.close()
-                yield from server_handle.wait_closed()
-
-            loop = asyncio.get_event_loop()
-            stop = asyncio.Future()
-
-            print(os.getpid())
-
-            def debug():
-                print("TERM")
-
-            loop.add_signal_handler(signal.SIGTERM, debug)
-            loop.run_until_complete(server(stop))
-
-        self.process = Process(target=process)
-        self.process.start()
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        os.kill(self.process.pid, signal.SIGTERM)
-        print(self.process.pid)
-        print("term")
-        self.process.join()
-        print("joined")
+    def to_json(self):
+        return json.dumps({"input": self.send, "output": self.output})
 
 
 class TestRpc(unittest.TestCase):
@@ -182,10 +119,10 @@ class TestRpcReceiver(unittest.TestCase):
     """
 
     def test_math_add(self):
+        """
+        Testing simple math add function.
+        """
         pass
-        # """
-        # Testing simple math add function.
-        # """
 
         # @Rpc.method
         # def math_add(integer1, integer2):
@@ -211,74 +148,87 @@ class TestRpcReceiver(unittest.TestCase):
         """
         Testing simple math add function with async features.
         """
-        pass
-        # stop = asyncio.Future()
-        # start = asyncio.Future()
+        import logging, sys
 
-        # @Rpc.method
-        # @asyncio.coroutine
-        # def math_add(integer1, integer2):
-        #     """
-        #     Simple add function with async.
+        root = logging.getLogger()
+        root.setLevel(logging.DEBUG)
 
-        #     Arguments
-        #     ---------
-        #         integer1: first operand
-        #         integer2: second operand
-        #     """
-        #     yield from asyncio.sleep(1)
-        #     res = (integer1 + integer2)
-        #     return res
+        ch = logging.StreamHandler(sys.stdout)
+        ch.setLevel(logging.DEBUG)
+        formatter = logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        ch.setFormatter(formatter)
+        root.addHandler(ch)
 
-        # @asyncio.coroutine
-        # def callback(sender, item):
-        #     """
-        #     Simple callback
-        #     """
-        #     yield from sender.send(item.to_json())
-        #     stop.set_result(None)
+        @Rpc.method
+        @asyncio.coroutine
+        def math_add(integer1, integer2):
+            """
+            Simple add function with async.
 
-        # server = Server(
-        #     [
-        #         Command("math_add", integer1=1, integer2=2).to_json(),
-        #     ],
-        #     [
-        #         Status.ok(3).to_json(),
-        #     ],
-        # )
+            Arguments
+            ---------
+                integer1: first operand
+                integer2: second operand
+            """
+            yield from asyncio.sleep(1)
+            res = (integer1 + integer2)
+            return res
 
-        # loop = asyncio.get_event_loop()
-        # loop.add_signal_handler(signal.SIGCONT, start.set_result, None)
+        loop = asyncio.get_event_loop()
 
-        # with server:
-        #     print("waiting for server")
-        #     asyncio.wait(start)
-        #     print("ready")
-        #     time.sleep(0.5)
-        #     print("ready")
+        cont = asyncio.Future()
+        loop.add_signal_handler(signal.SIGCONT, cont.set_result, None)
 
-        #     recv = RpcReceiver(
-        #         'ws://127.0.0.1:8750/receive_from_server',
-        #         'ws://127.0.0.1:8750/send_to_server',
-        #     )
+        abrt = asyncio.Future()
+        loop.add_signal_handler(signal.SIGABRT, abrt.set_result, None)
 
-        #     first = asyncio.ensure_future(recv.run(callback))
-        #     second = asyncio.ensure_future(stop)
+        server = Server(
+            [
+                Command("math_add", integer1=1, integer2=2).to_json(),
+            ],
+            [
+                Status.ok(3).to_json(),
+            ],
+            loop,
+        )
 
-        #     @asyncio.coroutine
-        #     def run():
-        #         """
-        #         Wrapper for event loop.
-        #         """
-        #         _, pending = yield from asyncio.wait(
-        #             [first, second],
-        #             return_when=asyncio.FIRST_COMPLETED,
-        #         )
-        #         for pen in pending:
-        #             pen.cancel()
+        process = loop.run_until_complete(server.run())
+        loop.run_until_complete(cont)
+        process.stdin.write(server.to_json())
 
-        #     loop.run_until_complete(run())
-        #     recv.close()
+        recv = RpcReceiver(
+            'ws://127.0.0.1:8750/receive_from_server',
+            'ws://127.0.0.1:8750/send_to_server',
+        )
+
+        first = asyncio.ensure_future(recv.run())
+        second = asyncio.ensure_future(abrt)
+        third = asyncio.ensure_future(server.run())
+
+        @asyncio.coroutine
+        def run():
+            """
+            Wrapper for event loop.
+            """
+            _, pending = yield from asyncio.wait(
+                [
+                    first,
+                    second,
+                    third,
+                ],
+                return_when=asyncio.FIRST_COMPLETED,
+            )
+
+            for pen in pending:
+                pen.cancel()
+
+        loop.run_until_complete(run())
+        print("Terminate")
+        process.terminate()
+        print("Wait")
+        loop.run_until_complete(process.wait())
+        recv.close()
 
 
 class TestCommand(unittest.TestCase):
