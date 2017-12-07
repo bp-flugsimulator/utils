@@ -1,5 +1,5 @@
 """
-This module holds all classes which depdends on websockets.
+This module holds all classes which depends on websockets.
 Since websockets is a optional dependency.
 """
 import asyncio
@@ -14,7 +14,7 @@ class RpcReceiver:
     """
     Represents a client which connects via websockets to
     a websocket server. This client receives commands
-    and excutes them.
+    and executes them.
     """
 
     def __init__(self, listen, send):
@@ -62,18 +62,11 @@ class RpcReceiver:
             pass
 
     @asyncio.coroutine
-    def run(self, callback):
+    def run(self):
         """
-        Listens to the specified address and reads the stream.
-        If a package was received it will be encoded and tried
-        to executed. The send stream and the result will be
-        pushed into the callback function.
-
-        Arguments
-        ---------
-            callback: a function witch takes a send stream and a result
-            stop: a event which is called when a signal received
-
+        Listen on a connection and executes the incoming commands,
+        if it is a valid command. The result will be send (notified)
+        via the send connection.
         """
         self.sender_session = yield from self.sender_connection
         self.listen_session = yield from self.listen_connection
@@ -90,8 +83,7 @@ class RpcReceiver:
                 except ReceiverError as err:
                     result = Status.err(str(err))
 
-                yield from callback(self.sender_session, result)
-
+                yield from self.sender_session.send(result)
         except websockets.exceptions.ConnectionClosed as err:
             if err.code != 1000:
                 raise err

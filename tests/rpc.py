@@ -18,7 +18,7 @@ from utils import Rpc, RpcReceiver, Command, Status
 
 class Server:
     """
-    Represents a test server wich runs a websocket and
+    Represents a test server which runs a websocket and
     a set of sendable items and a set of items which
     should be received.
     """
@@ -50,7 +50,7 @@ class TestRpc(unittest.TestCase):
 
     def assertIterateEqual(self, first, second):
         """
-        Compares two iteratable objects if the order of
+        Compares two iterable objects if the order of
         the items are the same.
         """
         for first_item, second_item in zip(first, second):

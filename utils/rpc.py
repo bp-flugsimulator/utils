@@ -10,7 +10,7 @@ __all__ = ["ReceiverError", "ProtocolError", "Rpc", "Command"]
 
 class ReceiverError(Exception):
     """
-    An error occured while the executon.
+    An error occurred while the execution.
     This error should be used inside the
     RPC function, which is identified by
     the @Rpc.method.
@@ -62,7 +62,7 @@ def method_wrapper(method_list):
 
 class Rpc:
     """
-    Represents a class wich collects all
+    Represents a class which collects all
     RPC methods. Afterwards this class can
     be used to dispatch functions dynamic.
     """
@@ -103,8 +103,8 @@ class Rpc:
 class Command:
     """
     Represents an rpc call which holds information
-    about the function namen and arugments.
-    A valid Command is a funcion name as a string
+    about the function name and arguments.
+    A valid Command is a function name as a string
     and a dict with all function arguments.
     """
 
@@ -146,7 +146,7 @@ class Command:
         Except
         ------
             ProtocolError when a key is not found or
-            an entrie has a wrong type.
+            an entire has a wrong type.
         """
         json_data = json.loads(data)
         try:
