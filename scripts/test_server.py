@@ -48,6 +48,8 @@ def run(send, incoming):
             try:
                 while True:
                     logging.debug("Wait for messages.")
+                    logging.debug("Websocket attrs: {}".format(
+                        dir(websocket.recv)))
                     elm = yield from websocket.recv()
                     logging.debug("Recvied element.")
                     incoming.remove(elm)
