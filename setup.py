@@ -26,6 +26,9 @@ def get_requirements(file):
     return install_reqs_list
 
 
+INSTALL_REQUIRES = get_requirements("requirements.txt")
+WEBSOCKETS_REQUIRES = get_requirements("websockets_requirements.txt")
+
 setup(
     name="bp-flugsimulator-utils",
     description="Utils for the bp-flugsimulator",
@@ -34,13 +37,12 @@ setup(
     url="https://github.com/bp-flugsimulator/utils",
     author="bp-flugsimulator",
     license="MIT",
-    install_requires=get_requirements("requirements.txt"),
+    install_requires=INSTALL_REQUIRES,
     python_requires=">=3.4",
-    py_modules=["rpc", "rpc_extra", "status"],
     packages=find_packages(
         exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
     extras_require={
-        "websockets": get_requirements("requirements_websockets.txt")
+        "websockets": WEBSOCKETS_REQUIRES,
     },
     test_suite="tests",
     tests_require=FULL_REQUIREMENTS,
