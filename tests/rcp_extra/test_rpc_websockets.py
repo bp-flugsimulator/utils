@@ -57,8 +57,10 @@ class Server:
             os.path.join(os.getcwd(), "scripts"), "test_server.py")
         logging.debug("Running python script {} as server.".format(py_file))
 
-        return asyncio.create_subprocess_shell(
-            "{} {} {}".format(sys.executable, py_file, os.getpid()),
+        return asyncio.create_subprocess_exec(
+            sys.executable,
+            py_file,
+            str(os.getpid()),
             stdout=asyncio.subprocess.PIPE,
             stdin=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
