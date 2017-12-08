@@ -33,8 +33,8 @@ class Server:
         py = os.path.join(
             os.path.dirname(os.path.realpath(__file__)), "server.py")
 
-        return asyncio.create_subprocess_exec(
-            py,
+        return asyncio.create_subprocess_shell(
+            "python {}".format(py),
             stdout=asyncio.subprocess.PIPE,
             stdin=asyncio.subprocess.PIPE,
         )
@@ -160,6 +160,9 @@ class TestRpcReceiver(unittest.TestCase):
         ch.setFormatter(formatter)
         root.addHandler(ch)
 
+        from concurrent.futures import ThreadPoolExecutor
+        pool = ThreadPoolExecutor(5)
+
         @Rpc.method
         @asyncio.coroutine
         def math_add(integer1, integer2):
@@ -177,11 +180,17 @@ class TestRpcReceiver(unittest.TestCase):
 
         loop = asyncio.get_event_loop()
 
+        # server is ready
         cont = asyncio.Future()
         loop.add_signal_handler(signal.SIGCONT, cont.set_result, None)
 
+        # server error occurred
         abrt = asyncio.Future()
         loop.add_signal_handler(signal.SIGABRT, abrt.set_result, None)
+
+        # server is finished
+        end = asyncio.Future()
+        loop.add_signal_handler(signal.SIGQUIT, end.set_result, None)
 
         server = Server(
             [
@@ -193,29 +202,71 @@ class TestRpcReceiver(unittest.TestCase):
             loop,
         )
 
+        logging.debug("Start process")
         process = loop.run_until_complete(server.run())
-        loop.run_until_complete(cont)
-        process.stdin.write(server.to_json())
+        process.stdin.write(server.to_json().encode())
+        process.stdin.write("\n".encode())
+
+        @asyncio.coroutine
+        def forward_stdout():
+            while True:
+                try:
+                    line = yield from process.stdout.readline()
+                    if not line:
+                        break
+                    sys.stdout.write("[Process] {}".format(line.decode()))
+                except:
+                    pass
+
+            return None
+
+        asyncio.ensure_future(forward_stdout())
+
+        @asyncio.coroutine
+        def wait_for_cont():
+            """
+            Wrapper for event loop.
+            """
+            finished, pending = yield from asyncio.wait(
+                [
+                    asyncio.ensure_future(cont),
+                    asyncio.ensure_future(process.wait()),
+                ],
+                return_when=asyncio.FIRST_COMPLETED,
+            )
+
+            for fin in finished:
+                if fin.result == 1:
+                    raise ValueError(
+                        "Found a result wich is not None. That means the process ended which is not wanted in this stage."
+                    )
+
+                if fin.result == 0:
+                    raise ValueError("Program exited.")
+
+            for pen in pending:
+                pen.cancel()
+
+        logging.debug("Wait for continue")
+        loop.run_until_complete(wait_for_cont())
+        logging.debug("Continue")
 
         recv = RpcReceiver(
             'ws://127.0.0.1:8750/receive_from_server',
             'ws://127.0.0.1:8750/send_to_server',
         )
 
-        first = asyncio.ensure_future(recv.run())
-        second = asyncio.ensure_future(abrt)
-        third = asyncio.ensure_future(server.run())
-
         @asyncio.coroutine
         def run():
             """
             Wrapper for event loop.
             """
-            _, pending = yield from asyncio.wait(
+            _finished, pending = yield from asyncio.wait(
                 [
-                    first,
-                    second,
-                    third,
+                    asyncio.ensure_future(recv.run()),
+                    asyncio.ensure_future(abrt),
+                    asyncio.ensure_future(end),
+                    asyncio.ensure_future(process.wait()),
                 ],
                 return_when=asyncio.FIRST_COMPLETED,
             )
@@ -224,9 +275,8 @@ class TestRpcReceiver(unittest.TestCase):
                 pen.cancel()
 
         loop.run_until_complete(run())
-        print("Terminate")
+        recv.close()
         process.terminate()
-        print("Wait")
         loop.run_until_complete(process.wait())
         recv.close()
 

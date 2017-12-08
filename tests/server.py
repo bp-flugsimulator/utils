@@ -1,8 +1,8 @@
 import logging, sys
 import os
 import asyncio
-import websockets
 import signal
+import websockets
 import json
 
 
@@ -38,8 +38,14 @@ def run(send, incoming):
             Handles the incomming messages.
             """
             while True:
+                print("wait for messages")
                 elm = yield from websocket.recv()
+                print("recvieed element")
                 incoming.remove(elm)
+
+                if not incoming:
+                    print(incoming)
+                    os.kill(os.getppid(), signal.SIGQUIT)
 
         @asyncio.coroutine
         def handle_producer(websocket):
@@ -47,10 +53,11 @@ def run(send, incoming):
             Handles the outgoing messages.
             """
             for elm in send:
+                print("send element: {}".format(elm))
                 yield from websocket.send(elm)
 
             while True:
-                pass
+                yield from asyncio.sleep(1)
 
         @asyncio.coroutine
         def handler(websocket, path):
@@ -58,6 +65,7 @@ def run(send, incoming):
             Forwards all elements in the queue directly into the
             websocket.
             """
+            print("New connection on path {}".format(path))
             if path == "/send_to_server":
                 yield from handle_consumer(websocket)
             elif path == "/receive_from_server":
@@ -77,32 +85,33 @@ def run(send, incoming):
 
         server_handle.close()
         yield from server_handle.wait_closed()
-        loop.stop()
 
     loop = asyncio.get_event_loop()
     stop = asyncio.Future()
 
     loop.add_signal_handler(signal.SIGTERM, stop.set_result, None)
-    loop.create_task(server(stop))
-    loop.run_forever()
+    loop.run_until_complete(server(stop))
 
 
 if __name__ == '__main__':
-    for line in sys.stdin:
+    line = sys.stdin.readline()
+    line = line.rstrip()
+
+    try:
         data = json.loads(line)
-        try:
-            i = data['input']
-            o = data['output']
-        except Exception as err:
-            print(err)
-            print("Error while getting values (input, output).")
+        i = data['input']
+        o = data['output']
+    except:
+        print("Error while getting values (input, output).")
+        sys.exit(1)
 
-        if not isinstance(i, list):
-            print("Input is not instance of list.")
-            sys.exit(1)
+    if not isinstance(i, list):
+        print("Input is not instance of list.")
+        sys.exit(1)
 
-        if not isinstance(o, list):
-            print("Input is not instance of list.")
-            sys.exit(1)
+    if not isinstance(o, list):
+        print("Input is not instance of list.")
+        sys.exit(1)
 
-        run(data['input'], data['output'])
+    run(i, o)
+    sys.exit(0)
