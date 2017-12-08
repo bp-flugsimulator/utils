@@ -58,7 +58,7 @@ class Server:
         logging.debug("Running python script {} as server.".format(py_file))
 
         return asyncio.create_subprocess_shell(
-            "{} {}".format(sys.executable, py_file),
+            "{} {} {}".format(sys.executable, py_file, os.getpid()),
             stdout=asyncio.subprocess.PIPE,
             stdin=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
@@ -106,32 +106,6 @@ class TestRpcReceiver(unittest.TestCase):
     """
     Testcases for the RpcReceiver class.
     """
-
-    def test_math_add(self):
-        """
-        Testing simple math add function.
-        """
-        pass
-
-        # @Rpc.method
-        # def math_add(integer1, integer2):
-        #     """
-        #     Simple add function without async.
-
-        #     Arguments
-        #     ---------
-        #         integer1: first operand
-        #         integer2: second operand
-        #     """
-        #     return integer1 + integer2
-
-        # def callback(item):
-        #     """
-        #     Simple callback
-        #     """
-        #     self.put(item)
-
-        # RpcReceiver('127.0.0.1').run(callback)
 
     def test_math_add_async(self):
         """

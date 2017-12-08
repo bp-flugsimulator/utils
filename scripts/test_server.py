@@ -49,15 +49,13 @@ def run(send, incoming):
             try:
                 while True:
                     logging.debug("Wait for messages.")
-                    raise ValueError("Websocket attrs: {}".format(
-                        dir(websocket.recv)))
                     elm = yield from websocket.recv()
                     logging.debug("Recvied element.")
                     incoming.remove(elm)
                     logging.debug("Removed element.")
 
                     if not incoming:
-                        os.kill(os.getppid(), CS_END)
+                        os.kill(parent_pid, CS_END)
                         break
 
             except Exception as err:
@@ -100,7 +98,7 @@ def run(send, incoming):
             sys.exit(1)
 
         logging.debug("Sending SIGCONT to parent.")
-        os.kill(os.getppid(), CS_CONT)
+        os.kill(parent_pid, CS_CONT)
         yield from stop
 
         logging.debug("Received SIGTERM ... closing server.")
@@ -121,6 +119,7 @@ def run(send, incoming):
 
 
 if __name__ == '__main__':
+
     root = logging.getLogger()
     root.setLevel(logging.DEBUG)
 
@@ -132,9 +131,16 @@ if __name__ == '__main__':
     ch.setFormatter(formatter)
     root.addHandler(ch)
 
+    try:
+        parent_pid = int(sys.argv[1])
+    except:
+        logging.debug("Could not get parent pid id from program arguments.")
+        sys.exit(1)
+
     logging.debug("Fork method: {}".format(multiprocessing.get_start_method()))
     logging.debug("This Process pid: {}".format(os.getpid()))
     logging.debug("Parent Process pid: {}".format(os.getppid()))
+    logging.debug("Argument Process pid: {}".format(parent_pid))
 
     logging.debug("Reading stdin.")
     line = sys.stdin.readline()
