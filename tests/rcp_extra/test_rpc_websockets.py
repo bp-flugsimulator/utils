@@ -274,3 +274,4 @@ class TestRpcReceiver(unittest.TestCase):
         process.terminate()
         logging.debug("Wait for process to close.")
         loop.run_until_complete(process.wait())
+        loop.close()
