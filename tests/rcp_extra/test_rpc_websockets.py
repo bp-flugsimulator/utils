@@ -9,6 +9,7 @@ import multiprocessing
 import os
 import signal
 import sys
+import time
 import unittest
 
 import websockets
@@ -78,7 +79,7 @@ class Server:
         asyncio.ensure_future(forward_stream_to(process.stdout, sys.stdout))
         asyncio.ensure_future(forward_stream_to(process.stderr, sys.stdout))
 
-        time.sleep(0.5)
+        time.sleep(1)
 
         recv = RpcReceiver(
             'ws://127.0.0.1:8750/receive_from_server',
@@ -212,4 +213,4 @@ class TestRpcReceiver(unittest.TestCase):
             [
                 Status.ok(3).to_json(),
             ],
-        )
+        ).run()
