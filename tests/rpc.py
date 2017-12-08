@@ -49,6 +49,7 @@ class Server:
     def run(self):
         py_file = os.path.join(
             os.path.dirname(os.path.realpath(__file__)), "server.py")
+        logging.debug("Running python script {} as server.".format(py_file))
 
         return asyncio.create_subprocess_shell(
             "python {}".format(py_file),
