@@ -81,7 +81,7 @@ def run(send, incoming):
         try:
             logging.debug("Starting websocket server.")
             server_handle = yield from websockets.serve(
-                handler, '0.0.0.0', 8750)
+                handler, host='0.0.0.0', port=8750)
         except Exception as err:
             logging.debug(err)
             sys.exit(1)
