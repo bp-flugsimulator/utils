@@ -13,8 +13,6 @@ import subprocess
 import websockets
 from utils import Rpc, RpcReceiver, Command, Status
 
-# multiprocessing.set_start_method('spawn')
-
 
 class Server:
     """
@@ -30,11 +28,11 @@ class Server:
         self.process = None
 
     def run(self):
-        py = os.path.join(
+        py_file = os.path.join(
             os.path.dirname(os.path.realpath(__file__)), "server.py")
 
         return asyncio.create_subprocess_shell(
-            "python {}".format(py),
+            "python {}".format(py_file),
             stdout=asyncio.subprocess.PIPE,
             stdin=asyncio.subprocess.PIPE,
         )
@@ -97,7 +95,7 @@ class TestRpc(unittest.TestCase):
         self.assertEqual(Rpc.get("test2"), test2)
 
     @unittest.expectedFailure
-    def tets_rpc_multiple_same_name(self):
+    def test_rpc_multiple_same_name(self):
         """
         Test the output for functions with same names.
         """
@@ -161,9 +159,6 @@ class TestRpcReceiver(unittest.TestCase):
         ch.setFormatter(formatter)
         root.addHandler(ch)
 
-        from concurrent.futures import ThreadPoolExecutor
-        pool = ThreadPoolExecutor(5)
-
         @Rpc.method
         @asyncio.coroutine
         def math_add(integer1, integer2):
@@ -203,13 +198,19 @@ class TestRpcReceiver(unittest.TestCase):
             loop,
         )
 
-        logging.debug("Start process")
+        logging.debug("Start child process.")
         process = loop.run_until_complete(server.run())
+
+        logging.debug("Writing json object to stdin.")
         process.stdin.write(server.to_json().encode())
         process.stdin.write("\n".encode())
 
         @asyncio.coroutine
         def forward_stdout():
+            """
+            Function which forwards the stdout from the
+            child process to the parents stdout.
+            """
             while True:
                 try:
                     line = yield from process.stdout.readline()
@@ -236,6 +237,7 @@ class TestRpcReceiver(unittest.TestCase):
                 return_when=asyncio.FIRST_COMPLETED,
             )
 
+            logging.debug("wait_for_cont() -> finished")
             for fin in finished:
                 if fin.result == 1:
                     raise ValueError(
@@ -248,9 +250,9 @@ class TestRpcReceiver(unittest.TestCase):
             for pen in pending:
                 pen.cancel()
 
-        logging.debug("Wait for continue")
+        logging.debug("Wait for SIGCONT.")
         loop.run_until_complete(wait_for_cont())
-        logging.debug("Continue")
+        logging.debug("Received SIGCONT.")
 
         recv = RpcReceiver(
             'ws://127.0.0.1:8750/receive_from_server',
@@ -272,8 +274,8 @@ class TestRpcReceiver(unittest.TestCase):
                 return_when=asyncio.FIRST_COMPLETED,
             )
 
+            logging.debug("run() -> finished")
             for fin in finished:
-
                 if fin.exception() is not None:
                     raise fin.exception()
 
@@ -283,11 +285,13 @@ class TestRpcReceiver(unittest.TestCase):
             for pen in pending:
                 pen.cancel()
 
+        logging.debug("Running main loop.")
         loop.run_until_complete(run())
         recv.close()
+        logging.debug("Send SIGTERM to child process.")
         process.terminate()
+        logging.debug("Wait for process to close.")
         loop.run_until_complete(process.wait())
-        recv.close()
 
 
 class TestCommand(unittest.TestCase):

@@ -8,7 +8,7 @@ import json
 
 def run(send, incoming):
     """
-    Reprensets the process
+    Represents the process
     """
 
     root = logging.getLogger()
@@ -17,8 +17,7 @@ def run(send, incoming):
     ch = logging.StreamHandler(sys.stdout)
     ch.setLevel(logging.DEBUG)
     formatter = logging.Formatter(
-        "[PROCESS] [%(asctime)s] [%(levelname)s]: %(message)s",
-        datefmt='%M:%S')
+        "[CHILD] [%(asctime)s] [%(levelname)s]: %(message)s", datefmt='%M:%S')
     ch.setFormatter(formatter)
     root.addHandler(ch)
 
@@ -40,17 +39,19 @@ def run(send, incoming):
             """
             try:
                 while True:
-                    logging.debug("wait for messages")
+                    logging.debug("Wait for messages.")
                     elm = yield from websocket.recv()
-                    logging.debug("Recvied element")
+                    logging.debug("Recvied element.")
                     incoming.remove(elm)
+                    logging.debug("Removed element.")
 
                     if not incoming:
                         os.kill(os.getppid(), signal.SIGQUIT)
                         break
 
             except Exception as err:
-                print(err)
+                logging.debug("Error while receiving/removing item.")
+                logging.debug(err)
                 sys.exit(1)
 
         @asyncio.coroutine
@@ -59,7 +60,7 @@ def run(send, incoming):
             Handles the outgoing messages.
             """
             for elm in send:
-                logging.debug("send element: {}".format(elm))
+                logging.debug("Send element: {}".format(elm))
                 yield from websocket.send(elm)
 
             while True:
@@ -80,15 +81,18 @@ def run(send, incoming):
                 ValueError("path not registered.")
 
         try:
+            logging.debug("Starting websocket server.")
             server_handle = yield from websockets.serve(
                 handler, '0.0.0.0', 8750)
         except Exception as err:
             logging.debug(err)
             sys.exit(1)
 
+        logging.debug("Sending SIGCONT to parent.")
         os.kill(os.getppid(), signal.SIGCONT)
         yield from stop
 
+        logging.debug("Received SIGTERM ... closing server.")
         server_handle.close()
         yield from server_handle.wait_closed()
 
@@ -100,10 +104,15 @@ def run(send, incoming):
 
 
 if __name__ == '__main__':
+    logging.debug("This Process: {}".format(os.getpid()))
+    logging.debug("Parent Process: {}".format(os.getppid()))
+
+    logging.debug("Reading stdin.")
     line = sys.stdin.readline()
     line = line.rstrip()
 
     try:
+        logging.debug("Reading json input.")
         data = json.loads(line)
         i = data['input']
         o = data['output']
