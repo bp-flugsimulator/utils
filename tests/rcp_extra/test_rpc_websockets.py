@@ -60,7 +60,6 @@ class Server:
         return asyncio.create_subprocess_exec(
             sys.executable,
             py_file,
-            str(os.getpid()),
             stdout=asyncio.subprocess.PIPE,
             stdin=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
