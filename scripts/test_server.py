@@ -9,20 +9,9 @@ import multiprocessing
 COLOR_TEXT = '\033[34m'
 COLOR_END = '\033[0m'
 
-try:
-    CS_END = signal.SIGTERM
-except:
-    CS_END = 10
-
-try:
-    CS_CONT = signal.SIGCONT
-except:
-    CS_CONT = 11
-
-try:
-    CS_ABORT = signal.SIGABRT
-except:
-    CS_ABORT = 12
+CS_END = signal.SIGTERM
+CS_ABORT = signal.SIGABRT
+CS_CONT = signal.SIGINT
 
 
 def run(send, incoming):
@@ -55,7 +44,7 @@ def run(send, incoming):
                     logging.debug("Removed element.")
 
                     if not incoming:
-                        os.kill(parent_pid, CS_END)
+                        os.kill(os.getppid(), CS_END)
                         break
 
             except Exception as err:
@@ -98,7 +87,7 @@ def run(send, incoming):
             sys.exit(1)
 
         logging.debug("Sending SIGCONT to parent.")
-        os.kill(parent_pid, CS_CONT)
+        os.kill(os.getppid(), CS_CONT)
         yield from stop
 
         logging.debug("Received SIGTERM ... closing server.")
@@ -131,16 +120,9 @@ if __name__ == '__main__':
     ch.setFormatter(formatter)
     root.addHandler(ch)
 
-    try:
-        parent_pid = int(sys.argv[1])
-    except:
-        logging.debug("Could not get parent pid id from program arguments.")
-        sys.exit(1)
-
     logging.debug("Fork method: {}".format(multiprocessing.get_start_method()))
     logging.debug("This Process pid: {}".format(os.getpid()))
     logging.debug("Parent Process pid: {}".format(os.getppid()))
-    logging.debug("Argument Process pid: {}".format(parent_pid))
 
     logging.debug("Reading stdin.")
     line = sys.stdin.readline()
