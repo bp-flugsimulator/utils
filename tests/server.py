@@ -5,26 +5,18 @@ import signal
 import websockets
 import json
 
+COLOR_TEXT = '\033[34m'
+COLOR_END = '\033[0m'
+
 
 def run(send, incoming):
     """
     Represents the process
     """
 
-    root = logging.getLogger()
-    root.setLevel(logging.DEBUG)
-
-    ch = logging.StreamHandler(sys.stdout)
-    ch.setLevel(logging.DEBUG)
-    formatter = logging.Formatter(
-        "[CHILD] [%(asctime)s] [%(levelname)s]: %(message)s", datefmt='%M:%S')
-    ch.setFormatter(formatter)
-    root.addHandler(ch)
-
     @asyncio.coroutine
     def server(stop):
         """
-
         Arguments
         ---------
             stop: @coroutine which signals that the server should stop
@@ -72,7 +64,7 @@ def run(send, incoming):
             Forwards all elements in the queue directly into the
             websocket.
             """
-            print("New connection on path {}".format(path))
+            logging.debug("New connection on path {}".format(path))
             if path == "/send_to_server":
                 yield from handle_consumer(websocket)
             elif path == "/receive_from_server":
@@ -104,6 +96,17 @@ def run(send, incoming):
 
 
 if __name__ == '__main__':
+    root = logging.getLogger()
+    root.setLevel(logging.DEBUG)
+
+    ch = logging.StreamHandler(sys.stdout)
+    ch.setLevel(logging.DEBUG)
+    formatter = logging.Formatter(
+        COLOR_TEXT + "[SERVER] [%(asctime)s]: %(message)s" + COLOR_END,
+        datefmt='%M:%S')
+    ch.setFormatter(formatter)
+    root.addHandler(ch)
+
     logging.debug("This Process: {}".format(os.getpid()))
     logging.debug("Parent Process: {}".format(os.getppid()))
 

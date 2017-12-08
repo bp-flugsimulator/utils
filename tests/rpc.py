@@ -13,6 +13,9 @@ import subprocess
 import websockets
 from utils import Rpc, RpcReceiver, Command, Status
 
+COLOR_TEXT = '\033[35m'
+COLOR_END = '\033[0m'
+
 
 class Server:
     """
@@ -154,7 +157,7 @@ class TestRpcReceiver(unittest.TestCase):
         ch = logging.StreamHandler(sys.stdout)
         ch.setLevel(logging.DEBUG)
         formatter = logging.Formatter(
-            "[ROOT] [%(asctime)s] [%(levelname)s]: %(message)s",
+            COLOR_TEXT + "[ROOT] [%(asctime)s]: %(message)s" + COLOR_END,
             datefmt='%M:%S')
         ch.setFormatter(formatter)
         root.addHandler(ch)
