@@ -9,6 +9,7 @@ import json
 import os
 import sys
 import logging
+import multiprocessing
 
 import websockets
 from utils import Rpc, RpcReceiver, Command, Status
