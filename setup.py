@@ -27,7 +27,7 @@ def get_requirements(file):
 
 
 INSTALL_REQUIRES = get_requirements("requirements.txt")
-WEBSOCKETS_REQUIRES = get_requirements("websockets_requirements.txt")
+WEBSOCKETS_REQUIRES = get_requirements("requirements_websockets.txt")
 
 setup(
     name="bp-flugsimulator-utils",
