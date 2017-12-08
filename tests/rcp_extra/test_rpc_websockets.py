@@ -52,7 +52,8 @@ class Server:
         -------
             process
         """
-        py_file = os.path.join(os.getcwd(), "scripts/test_server.py")
+        py_file = os.path.join(
+            os.path.join(os.getcwd(), "scripts"), "test_server.py")
         logging.debug("Running python script {} as server.".format(py_file))
 
         return asyncio.create_subprocess_shell(
