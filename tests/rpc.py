@@ -201,11 +201,13 @@ class TestRpcReceiver(unittest.TestCase):
         ch = logging.StreamHandler(sys.stdout)
         ch.setLevel(logging.DEBUG)
         formatter = logging.Formatter(
-            COLOR_TEXT + "[ROOT] [%(asctime)s]: %(message)s" + COLOR_END,
+            COLOR_TEXT + "[CLIENT] [%(asctime)s]: %(message)s" + COLOR_END,
             datefmt='%M:%S',
         )
         ch.setFormatter(formatter)
         root.addHandler(ch)
+
+        logging.debug("This Process: {}".format(os.getpid()))
 
         @Rpc.method
         @asyncio.coroutine
