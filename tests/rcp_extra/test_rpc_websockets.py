@@ -148,6 +148,8 @@ class TestRpcReceiver(unittest.TestCase):
         ch.setFormatter(formatter)
         root.addHandler(ch)
 
+        logging.debug("Fork method: {}".format(
+            multiprocessing.get_start_method))
         logging.debug("This Process pid: {}".format(os.getpid()))
 
         @Rpc.method
