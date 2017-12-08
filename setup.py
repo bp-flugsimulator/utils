@@ -42,5 +42,6 @@ setup(
     extras_require={
         "websockets": get_requirements("requirements_websockets.txt")
     },
+    test_suite="tests",
     tests_require=FULL_REQUIREMENTS,
 )
