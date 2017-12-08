@@ -9,11 +9,6 @@ import multiprocessing
 COLOR_TEXT = '\033[34m'
 COLOR_END = '\033[0m'
 
-CS_END = signal.SIGTERM
-CS_ABORT = signal.SIGABRT
-CS_CONT = signal.SIGFPE
-
-
 def run(send, incoming):
     """
     Represents the process
