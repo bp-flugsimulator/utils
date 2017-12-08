@@ -8,6 +8,7 @@ import signal
 import time
 import json
 import os
+import sys
 import subprocess
 
 import websockets
@@ -15,6 +16,21 @@ from utils import Rpc, RpcReceiver, Command, Status
 
 COLOR_TEXT = '\033[35m'
 COLOR_END = '\033[0m'
+
+try:
+    CS_END = signal.SIGTERM
+except:
+    CS_END = 10
+
+try:
+    CS_CONT = signal.SIGCONT
+except:
+    CS_END = 11
+
+try:
+    CS_ABORT = signal.SIGABRT
+except:
+    CS_ABORT = 12
 
 
 class Server:
@@ -38,10 +54,38 @@ class Server:
             "python {}".format(py_file),
             stdout=asyncio.subprocess.PIPE,
             stdin=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
         )
 
     def to_json(self):
         return json.dumps({"input": self.send, "output": self.output})
+
+
+@asyncio.coroutine
+def forward_stream_to(source, destination):
+    """
+    Forwards all lines from the source to
+    the destination.
+
+    Arguments
+    ---------
+        source: Source stream
+        destination: Destination stream
+
+    Returns
+    -------
+        None
+    """
+    while True:
+        try:
+            line = yield from source.readline()
+            if not line:
+                break
+            destination.write(line.decode())
+        except:
+            pass
+
+    return None
 
 
 class TestRpc(unittest.TestCase):
@@ -149,7 +193,7 @@ class TestRpcReceiver(unittest.TestCase):
         """
         Testing simple math add function with async features.
         """
-        import logging, sys
+        import logging
 
         root = logging.getLogger()
         root.setLevel(logging.DEBUG)
@@ -158,7 +202,8 @@ class TestRpcReceiver(unittest.TestCase):
         ch.setLevel(logging.DEBUG)
         formatter = logging.Formatter(
             COLOR_TEXT + "[ROOT] [%(asctime)s]: %(message)s" + COLOR_END,
-            datefmt='%M:%S')
+            datefmt='%M:%S',
+        )
         ch.setFormatter(formatter)
         root.addHandler(ch)
 
@@ -181,16 +226,29 @@ class TestRpcReceiver(unittest.TestCase):
 
         # server is ready
         cont = asyncio.Future()
-        loop.add_signal_handler(signal.SIGCONT, cont.set_result, None)
+
+        def handle_cont(signum, frame):
+            cont.set_result(None)
+
+        signal.signal(CS_CONT, handle_cont)
 
         # server error occurred
         abrt = asyncio.Future()
-        loop.add_signal_handler(signal.SIGABRT, abrt.set_result, None)
+
+        def handle_abrt(signum, frame):
+            abrt.set_result(None)
+
+        signal.signal(CS_ABORT, handle_abrt)
 
         # server is finished
         end = asyncio.Future()
-        loop.add_signal_handler(signal.SIGQUIT, end.set_result, None)
 
+        def handle_end(signum, frame):
+            end.set_result(None)
+
+        signal.signal(CS_END, handle_end)
+
+        # define test set
         server = Server(
             [
                 Command("math_add", integer1=1, integer2=2).to_json(),
@@ -205,30 +263,16 @@ class TestRpcReceiver(unittest.TestCase):
         process = loop.run_until_complete(server.run())
 
         logging.debug("Writing json object to stdin.")
+        # transfer test set to process
         process.stdin.write(server.to_json().encode())
         process.stdin.write("\n".encode())
 
-        @asyncio.coroutine
-        def forward_stdout():
-            """
-            Function which forwards the stdout from the
-            child process to the parents stdout.
-            """
-            while True:
-                try:
-                    line = yield from process.stdout.readline()
-                    if not line:
-                        break
-                    sys.stdout.write(line.decode())
-                except:
-                    pass
-
-            return None
-
-        asyncio.ensure_future(forward_stdout())
+        # run instant in background
+        asyncio.ensure_future(forward_stream_to(process.stdout, sys.stdout))
+        asyncio.ensure_future(forward_stream_to(process.stderr, sys.stdout))
 
         @asyncio.coroutine
-        def wait_for_cont():
+        def wait_for_continue():
             """
             Wrapper for event loop.
             """
@@ -254,7 +298,7 @@ class TestRpcReceiver(unittest.TestCase):
                 pen.cancel()
 
         logging.debug("Wait for SIGCONT.")
-        loop.run_until_complete(wait_for_cont())
+        loop.run_until_complete(wait_for_continue())
         logging.debug("Received SIGCONT.")
 
         recv = RpcReceiver(
@@ -263,7 +307,7 @@ class TestRpcReceiver(unittest.TestCase):
         )
 
         @asyncio.coroutine
-        def run():
+        def wait_for_end():
             """
             Wrapper for event loop.
             """
@@ -277,7 +321,7 @@ class TestRpcReceiver(unittest.TestCase):
                 return_when=asyncio.FIRST_COMPLETED,
             )
 
-            logging.debug("run() -> finished")
+            logging.debug("wait_for_end() -> finished")
             for fin in finished:
                 if fin.exception() is not None:
                     raise fin.exception()
@@ -289,7 +333,7 @@ class TestRpcReceiver(unittest.TestCase):
                 pen.cancel()
 
         logging.debug("Running main loop.")
-        loop.run_until_complete(run())
+        loop.run_until_complete(wait_for_end())
         recv.close()
         logging.debug("Send SIGTERM to child process.")
         process.terminate()

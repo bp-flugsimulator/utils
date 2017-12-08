@@ -5,6 +5,8 @@ import signal
 import websockets
 import json
 
+from tests.rpc import CS_END, CS_CONT, CS_ABORT
+
 COLOR_TEXT = '\033[34m'
 COLOR_END = '\033[0m'
 
@@ -38,7 +40,7 @@ def run(send, incoming):
                     logging.debug("Removed element.")
 
                     if not incoming:
-                        os.kill(os.getppid(), signal.SIGQUIT)
+                        os.kill(os.getppid(), CS_END)
                         break
 
             except Exception as err:
@@ -81,7 +83,7 @@ def run(send, incoming):
             sys.exit(1)
 
         logging.debug("Sending SIGCONT to parent.")
-        os.kill(os.getppid(), signal.SIGCONT)
+        os.kill(os.getppid(), CS_CONT)
         yield from stop
 
         logging.debug("Received SIGTERM ... closing server.")
@@ -91,7 +93,13 @@ def run(send, incoming):
     loop = asyncio.get_event_loop()
     stop = asyncio.Future()
 
-    loop.add_signal_handler(signal.SIGTERM, stop.set_result, None)
+    def handle_stop(signum, frame):
+        """
+        Handle incoming SIGTERM signals.
+        """
+        stop.set_result(None)
+
+    signal.signal(CS_END, handle_stop)
     loop.run_until_complete(server(stop))
 
 
