@@ -225,7 +225,11 @@ class TestRpcReceiver(unittest.TestCase):
             res = (integer1 + integer2)
             return res
 
-        loop = asyncio.get_event_loop()
+        if os.name == 'nt':
+            loop = asyncio.ProactorEventLoop()
+            asyncio.set_event_loop(loop)
+        else:
+            loop = asyncio.get_event_loop()
 
         # server is ready
         cont = asyncio.Future()
