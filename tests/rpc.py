@@ -230,6 +230,11 @@ class TestRpcReceiver(unittest.TestCase):
         cont = asyncio.Future()
 
         def handle_cont(signum, frame):
+            """
+            Handles incoming signals.
+            """
+            logging.debug(
+                "Signal handler (continue) received signal {}.".format(signum))
             cont.set_result(None)
 
         signal.signal(CS_CONT, handle_cont)
@@ -238,6 +243,11 @@ class TestRpcReceiver(unittest.TestCase):
         abrt = asyncio.Future()
 
         def handle_abrt(signum, frame):
+            """
+            Handles incoming signals.
+            """
+            logging.debug(
+                "Signal handler (abort) received signal {}.".format(signum))
             abrt.set_result(None)
 
         signal.signal(CS_ABORT, handle_abrt)
@@ -246,6 +256,11 @@ class TestRpcReceiver(unittest.TestCase):
         end = asyncio.Future()
 
         def handle_end(signum, frame):
+            """
+            Handles incoming signals.
+            """
+            logging.debug(
+                "Signal handler (end) received signal {}.".format(signum))
             end.set_result(None)
 
         signal.signal(CS_END, handle_end)

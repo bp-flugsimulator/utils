@@ -97,6 +97,8 @@ def run(send, incoming):
         """
         Handle incoming SIGTERM signals.
         """
+        logging.debug(
+            "Signal handler (stop) received signal {}".format(signum))
         stop.set_result(None)
 
     signal.signal(CS_END, handle_stop)
