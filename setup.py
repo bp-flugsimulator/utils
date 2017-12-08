@@ -45,5 +45,5 @@ setup(
         "websockets": WEBSOCKETS_REQUIRES,
     },
     test_suite="tests",
-    tests_require=FULL_REQUIREMENTS,
+    # tests_require=FULL_REQUIREMENTS,
 )

@@ -13,7 +13,7 @@ environment:
     - PYTHON: "C:\\Python36-x64"
 
 install:
-  # We need wheel installed to build wheels
+  # We need wheel installed to install wheel packages
   - "%PYTHON%\\python.exe -m pip install wheel"
   - "%PYTHON%\\python.exe -m pip wheel -r requirements.txt"
   - "%PYTHON%\\python.exe -m pip wheel -r requirements_websockets.txt"
