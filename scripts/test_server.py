@@ -132,7 +132,7 @@ if __name__ == '__main__':
     ch.setFormatter(formatter)
     root.addHandler(ch)
 
-    logging.debug("Fork method: {}".format(multiprocessing.get_start_method))
+    logging.debug("Fork method: {}".format(multiprocessing.get_start_method()))
     logging.debug("This Process pid: {}".format(os.getpid()))
     logging.debug("Parent Process pid: {}".format(os.getppid()))
 
