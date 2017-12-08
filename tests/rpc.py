@@ -26,7 +26,7 @@ except:
 try:
     CS_CONT = signal.SIGCONT
 except:
-    CS_END = 11
+    CS_CONT = 11
 
 try:
     CS_ABORT = signal.SIGABRT
