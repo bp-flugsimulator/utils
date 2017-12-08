@@ -10,6 +10,7 @@ import json
 import os
 import sys
 import subprocess
+import logging
 
 import websockets
 from utils import Rpc, RpcReceiver, Command, Status
@@ -48,7 +49,8 @@ class Server:
 
     def run(self):
         py_file = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)), "server.py")
+            os.path.dirname(os.path.realpath(__file__)),
+            "../scripts/test_server.py")
         logging.debug("Running python script {} as server.".format(py_file))
 
         return asyncio.create_subprocess_shell(
@@ -194,8 +196,6 @@ class TestRpcReceiver(unittest.TestCase):
         """
         Testing simple math add function with async features.
         """
-        import logging
-
         root = logging.getLogger()
         root.setLevel(logging.DEBUG)
 
@@ -234,8 +234,6 @@ class TestRpcReceiver(unittest.TestCase):
             """
             Handles incoming signals.
             """
-            logging.debug(
-                "Signal handler (continue) received signal {}.".format(signum))
             cont.set_result(None)
 
         signal.signal(CS_CONT, handle_cont)
@@ -247,8 +245,6 @@ class TestRpcReceiver(unittest.TestCase):
             """
             Handles incoming signals.
             """
-            logging.debug(
-                "Signal handler (abort) received signal {}.".format(signum))
             abrt.set_result(None)
 
         signal.signal(CS_ABORT, handle_abrt)
@@ -260,8 +256,6 @@ class TestRpcReceiver(unittest.TestCase):
             """
             Handles incoming signals.
             """
-            logging.debug(
-                "Signal handler (end) received signal {}.".format(signum))
             end.set_result(None)
 
         signal.signal(CS_END, handle_end)

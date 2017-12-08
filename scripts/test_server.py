@@ -22,6 +22,7 @@ def run(send, incoming):
         Arguments
         ---------
             stop: @coroutine which signals that the server should stop
+
         Represents a process which the websockets
         server runs on.
         """
@@ -97,8 +98,6 @@ def run(send, incoming):
         """
         Handle incoming SIGTERM signals.
         """
-        logging.debug(
-            "Signal handler (stop) received signal {}".format(signum))
         stop.set_result(None)
 
     signal.signal(CS_END, handle_stop)
