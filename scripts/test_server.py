@@ -11,13 +11,15 @@ COLOR_END = '\033[0m'
 
 CS_END = signal.SIGTERM
 CS_ABORT = signal.SIGABRT
-CS_CONT = signal.SIGINT
+CS_CONT = signal.SIGFPE
 
 
 def run(send, incoming):
     """
     Represents the process
     """
+    loop = asyncio.get_event_loop()
+    stop = asyncio.Future()
 
     @asyncio.coroutine
     def server(stop):
@@ -29,6 +31,7 @@ def run(send, incoming):
         Represents a process which the websockets
         server runs on.
         """
+
 
         @asyncio.coroutine
         def handle_consumer(websocket):
@@ -44,7 +47,6 @@ def run(send, incoming):
                     logging.debug("Removed element.")
 
                     if not incoming:
-                        os.kill(os.getppid(), CS_END)
                         break
 
             except Exception as err:
@@ -78,6 +80,9 @@ def run(send, incoming):
             else:
                 ValueError("path not registered.")
 
+            if not incoming:
+                stop.set_result(None)
+
         try:
             logging.debug("Starting websocket server.")
             server_handle = yield from websockets.serve(
@@ -86,16 +91,11 @@ def run(send, incoming):
             logging.debug(err)
             sys.exit(1)
 
-        logging.debug("Sending SIGCONT to parent.")
-        os.kill(os.getppid(), CS_CONT)
         yield from stop
 
         logging.debug("Received SIGTERM ... closing server.")
         server_handle.close()
         yield from server_handle.wait_closed()
-
-    loop = asyncio.get_event_loop()
-    stop = asyncio.Future()
 
     def handle_stop(signum, frame):
         """
@@ -103,7 +103,6 @@ def run(send, incoming):
         """
         stop.set_result(None)
 
-    signal.signal(CS_END, handle_stop)
     loop.run_until_complete(server(stop))
 
 

@@ -15,9 +15,6 @@ import websockets
 from utils import Rpc, RpcReceiver, Command, Status
 
 # is on both platforms available
-CS_END = signal.SIGTERM
-CS_ABORT = signal.SIGABRT
-CS_CONT = signal.SIGINT
 
 COLOR_TEXT = '\033[35m'
 COLOR_END = '\033[0m'
@@ -141,39 +138,6 @@ class TestRpcReceiver(unittest.TestCase):
         else:
             loop = asyncio.get_event_loop()
 
-        # server is ready
-        cont = asyncio.Future()
-
-        def handle_cont(signum, frame):
-            """
-            Handles incoming signals.
-            """
-            cont.set_result(None)
-
-        signal.signal(CS_CONT, handle_cont)
-
-        # server error occurred
-        abrt = asyncio.Future()
-
-        def handle_abrt(signum, frame):
-            """
-            Handles incoming signals.
-            """
-            abrt.set_result(None)
-
-        signal.signal(CS_ABORT, handle_abrt)
-
-        # server is finished
-        end = asyncio.Future()
-
-        def handle_end(signum, frame):
-            """
-            Handles incoming signals.
-            """
-            end.set_result(None)
-
-        signal.signal(CS_END, handle_end)
-
         # define test set
         server = Server(
             [
@@ -199,36 +163,6 @@ class TestRpcReceiver(unittest.TestCase):
         asyncio.ensure_future(forward_stream_to(process.stdout, sys.stdout))
         asyncio.ensure_future(forward_stream_to(process.stderr, sys.stdout))
 
-        @asyncio.coroutine
-        def wait_for_continue():
-            """
-            Wrapper for event loop.
-            """
-            finished, pending = yield from asyncio.wait(
-                [
-                    asyncio.ensure_future(cont),
-                    asyncio.ensure_future(process.wait()),
-                ],
-                return_when=asyncio.FIRST_COMPLETED,
-            )
-
-            logging.debug("wait_for_cont() -> finished")
-            for fin in finished:
-                if fin.result == 1:
-                    raise ValueError(
-                        "Found a result which is not None. That means the process ended which is not wanted in this stage."
-                    )
-
-                if fin.result == 0:
-                    raise ValueError("Program exited.")
-
-            for pen in pending:
-                pen.cancel()
-
-        logging.debug("Wait for SIGCONT.")
-        loop.run_until_complete(wait_for_continue())
-        logging.debug("Received SIGCONT.")
-
         recv = RpcReceiver(
             'ws://127.0.0.1:8750/receive_from_server',
             'ws://127.0.0.1:8750/send_to_server',
@@ -242,8 +176,6 @@ class TestRpcReceiver(unittest.TestCase):
             finished, pending = yield from asyncio.wait(
                 [
                     asyncio.ensure_future(recv.run()),
-                    asyncio.ensure_future(abrt),
-                    asyncio.ensure_future(end),
                     asyncio.ensure_future(process.wait()),
                 ],
                 return_when=asyncio.FIRST_COMPLETED,
@@ -252,7 +184,15 @@ class TestRpcReceiver(unittest.TestCase):
             logging.debug("wait_for_end() -> finished")
             for fin in finished:
                 if fin.exception() is not None:
-                    raise fin.exception()
+                    try:
+                        raise fin.exception()
+                    except websockets.exceptions.ConnectionClosed as err:
+                        if err.code == 1001:
+                            pass
+                        else:
+                            raise err
+                    except Exception as err:
+                        raise err
 
                 if fin.result == 1:
                     raise ValueError("Program return EXIT_FAILURE")
