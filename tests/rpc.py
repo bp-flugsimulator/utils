@@ -278,6 +278,7 @@ class TestRpcReceiver(unittest.TestCase):
 
         logging.debug("Start child process.")
         process = loop.run_until_complete(server.run())
+        logging.debug("Child process spawned with pid {}".format(process.pid))
 
         logging.debug("Writing json object to stdin.")
         # transfer test set to process
