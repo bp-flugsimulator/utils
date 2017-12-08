@@ -4,6 +4,7 @@ import asyncio
 import signal
 import websockets
 import json
+import multiprocessing
 
 COLOR_TEXT = '\033[34m'
 COLOR_END = '\033[0m'
@@ -131,8 +132,9 @@ if __name__ == '__main__':
     ch.setFormatter(formatter)
     root.addHandler(ch)
 
-    logging.debug("This Process: {}".format(os.getpid()))
-    logging.debug("Parent Process: {}".format(os.getppid()))
+    logging.debug("Fork method: {}".format(multiprocessing.get_start_method))
+    logging.debug("This Process pid: {}".format(os.getpid()))
+    logging.debug("Parent Process pid: {}".format(os.getppid()))
 
     logging.debug("Reading stdin.")
     line = sys.stdin.readline()

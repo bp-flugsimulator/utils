@@ -148,7 +148,7 @@ class TestRpcReceiver(unittest.TestCase):
         ch.setFormatter(formatter)
         root.addHandler(ch)
 
-        logging.debug("This Process: {}".format(os.getpid()))
+        logging.debug("This Process pid: {}".format(os.getpid()))
 
         @Rpc.method
         @asyncio.coroutine
@@ -218,6 +218,7 @@ class TestRpcReceiver(unittest.TestCase):
         logging.debug("Start child process.")
         process = loop.run_until_complete(server.run())
         logging.debug("Child process spawned with pid {}".format(process.pid))
+        logging.debug("This Process pid: {}".format(os.getpid()))
 
         logging.debug("Writing json object to stdin.")
         # transfer test set to process
