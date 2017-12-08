@@ -17,7 +17,8 @@ def run(send, incoming):
     ch = logging.StreamHandler(sys.stdout)
     ch.setLevel(logging.DEBUG)
     formatter = logging.Formatter(
-        "[OTHER] %(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        "[PROCESS] [%(asctime)s] [%(levelname)s]: %(message)s",
+        datefmt='%M:%S')
     ch.setFormatter(formatter)
     root.addHandler(ch)
 
@@ -28,24 +29,29 @@ def run(send, incoming):
         Arguments
         ---------
             stop: @coroutine which signals that the server should stop
-        Represents a proces which the websockets
+        Represents a process which the websockets
         server runs on.
         """
 
         @asyncio.coroutine
         def handle_consumer(websocket):
             """
-            Handles the incomming messages.
+            Handles the incoming messages.
             """
-            while True:
-                print("wait for messages")
-                elm = yield from websocket.recv()
-                print("recvieed element")
-                incoming.remove(elm)
+            try:
+                while True:
+                    logging.debug("wait for messages")
+                    elm = yield from websocket.recv()
+                    logging.debug("Recvied element")
+                    incoming.remove(elm)
 
-                if not incoming:
-                    print(incoming)
-                    os.kill(os.getppid(), signal.SIGQUIT)
+                    if not incoming:
+                        os.kill(os.getppid(), signal.SIGQUIT)
+                        break
+
+            except Exception as err:
+                print(err)
+                sys.exit(1)
 
         @asyncio.coroutine
         def handle_producer(websocket):
@@ -53,7 +59,7 @@ def run(send, incoming):
             Handles the outgoing messages.
             """
             for elm in send:
-                print("send element: {}".format(elm))
+                logging.debug("send element: {}".format(elm))
                 yield from websocket.send(elm)
 
             while True:
@@ -77,7 +83,7 @@ def run(send, incoming):
             server_handle = yield from websockets.serve(
                 handler, '0.0.0.0', 8750)
         except Exception as err:
-            print(err)
+            logging.debug(err)
             sys.exit(1)
 
         os.kill(os.getppid(), signal.SIGCONT)
@@ -102,15 +108,15 @@ if __name__ == '__main__':
         i = data['input']
         o = data['output']
     except:
-        print("Error while getting values (input, output).")
+        logging.debug("Error while getting values (input, output).")
         sys.exit(1)
 
     if not isinstance(i, list):
-        print("Input is not instance of list.")
+        logging.debug("Input is not instance of list.")
         sys.exit(1)
 
     if not isinstance(o, list):
-        print("Input is not instance of list.")
+        logging.debug("Input is not instance of list.")
         sys.exit(1)
 
     run(i, o)

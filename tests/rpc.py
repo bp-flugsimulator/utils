@@ -156,7 +156,8 @@ class TestRpcReceiver(unittest.TestCase):
         ch = logging.StreamHandler(sys.stdout)
         ch.setLevel(logging.DEBUG)
         formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+            "[ROOT] [%(asctime)s] [%(levelname)s]: %(message)s",
+            datefmt='%M:%S')
         ch.setFormatter(formatter)
         root.addHandler(ch)
 
@@ -214,7 +215,7 @@ class TestRpcReceiver(unittest.TestCase):
                     line = yield from process.stdout.readline()
                     if not line:
                         break
-                    sys.stdout.write("[Process] {}".format(line.decode()))
+                    sys.stdout.write(line.decode())
                 except:
                     pass
 
@@ -238,7 +239,7 @@ class TestRpcReceiver(unittest.TestCase):
             for fin in finished:
                 if fin.result == 1:
                     raise ValueError(
-                        "Found a result wich is not None. That means the process ended which is not wanted in this stage."
+                        "Found a result which is not None. That means the process ended which is not wanted in this stage."
                     )
 
                 if fin.result == 0:
@@ -261,7 +262,7 @@ class TestRpcReceiver(unittest.TestCase):
             """
             Wrapper for event loop.
             """
-            _finished, pending = yield from asyncio.wait(
+            finished, pending = yield from asyncio.wait(
                 [
                     asyncio.ensure_future(recv.run()),
                     asyncio.ensure_future(abrt),
@@ -270,6 +271,14 @@ class TestRpcReceiver(unittest.TestCase):
                 ],
                 return_when=asyncio.FIRST_COMPLETED,
             )
+
+            for fin in finished:
+
+                if fin.exception() is not None:
+                    raise fin.exception()
+
+                if fin.result == 1:
+                    raise ValueError("Program return EXIT_FAILURE")
 
             for pen in pending:
                 pen.cancel()
