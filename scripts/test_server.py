@@ -5,10 +5,23 @@ import signal
 import websockets
 import json
 
-from tests.rpc import CS_END, CS_CONT, CS_ABORT
-
 COLOR_TEXT = '\033[34m'
 COLOR_END = '\033[0m'
+
+try:
+    CS_END = signal.SIGTERM
+except:
+    CS_END = 10
+
+try:
+    CS_CONT = signal.SIGCONT
+except:
+    CS_CONT = 11
+
+try:
+    CS_ABORT = signal.SIGABRT
+except:
+    CS_ABORT = 12
 
 
 def run(send, incoming):
