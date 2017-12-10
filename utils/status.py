@@ -9,13 +9,17 @@ __all__ = ["FormatError", "Status"]
 
 class FormatError(Exception):
     """
-    The given data are not valid encoded.
+    The input data is not valid encoded.
     """
 
 
 class Status:
     """
-    Represents a status.
+    Represents a status which is returned by a method. If the method was
+    successful it should return Status.ok(...) if not Status.err(...).
+    Status holds a playload which can be any kind of data. This payload
+    is related to the status. This means if Status.err(...) is returned
+    the payload should contain information about the causes of the failure.
     """
 
     ID_OK = "ok"
@@ -38,7 +42,8 @@ class Status:
 
     def status(self):
         """
-        Getter for status.
+        Returns the raw status string of this instance. Using this function is
+        not recommended. Use is_ok or is_err for checking the status.
 
         Returns
         -------
@@ -48,7 +53,7 @@ class Status:
 
     def payload(self):
         """
-        Getter for payload.
+        Returns the playload of this instance.
 
         Returns
         -------
@@ -58,7 +63,7 @@ class Status:
 
     def is_err(self):
         """
-        Tests if the current status is an error status.
+        Checks if the current status is Status.err(...).
 
         Returns
         ------
@@ -68,7 +73,7 @@ class Status:
 
     def is_ok(self):
         """
-        Tests if the current status is an error status.
+        Checks if the current status is Status.ok(...).
 
         Returns
         ------
@@ -77,33 +82,36 @@ class Status:
         return self.status() == Status.ID_OK
 
     @classmethod
-    def ok(cls, val):  #pylint: disable=C0103
+    def ok(cls, payload):  #pylint: disable=C0103
         """
-        This function creates a status which was
-        sucessfull.
+        Creates an instance of this class with a payload and a successful status
+        string. DO NOT use json.dumps(...) as a payload unless you want the
+        payload to be a string and not a json object.
 
         Arguments
         ---------
-            val: Any kind of serializable value.
+            payload: Any kind of serializable value.
         """
-        return cls(cls.ID_OK, val)
+        return cls(cls.ID_OK, payload)
 
     @classmethod
-    def err(cls, val):
+    def err(cls, payload):
         """
-        This function creates a status which was
-        not successful.
+        Creates an instance of this class with a payload and a unsuccessful
+        status string. DO NOT use json.dumps(...) as a payload unless you want
+        the payload to be a string and not a json object.
+
 
         Arguments
         ---------
-            val: Any kind of serializable value.
+            payload: Any kind of serializable value.
         """
-        return cls(cls.ID_ERR, val)
+        return cls(cls.ID_ERR, payload)
 
     def to_json(self):
         """
-        Generates a json string which holds the information about
-        a status.
+        Generates a string which is json encoded. This string can be send via
+        network and decoded to a json object by the receiver.
 
         Except
         ------
@@ -119,7 +127,8 @@ class Status:
     @classmethod
     def from_json(cls, data):
         """
-        Tries to create a status from a response.
+        Tries to parse a json object from a json encoded string.
+        The resulting json object is mapped to Status.
 
         Attributes
         ----------
@@ -152,8 +161,12 @@ class Status:
     @staticmethod
     def as_js():
         """
-        Returns a javascript class which has the same behavior and names
-        like the python class.
+        Returns a javascript class which has the same behavior and names like
+        the python class.
+
+        Returns
+        -------
+            string: which contains a valid javascript class
         """
         return """
             class Status {{
