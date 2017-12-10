@@ -1,10 +1,11 @@
 """
-This module holds all classes which depends on websockets.
-Since websockets is a optional dependency.
+This module holds all classes which depends on websockets. Since websockets is a
+optional dependency.
 """
 import asyncio
-import websockets
 import logging
+
+import websockets
 
 __all__ = ["RpcReceiver"]
 
@@ -13,9 +14,13 @@ from utils import Command, ReceiverError, Rpc, Status
 
 class RpcReceiver:
     """
-    Represents a client which connects via websockets to
-    a websocket server. This client receives commands
-    and executes them.
+    Represents a client which connects via websockets to a websocket server.
+    This client receives commands and executes them (RPC Protocol). It is
+    possible to execute async functions. This allows for example to execute sub
+    processes without blocking the current process. This specific protocol uses
+    two websockets connection. One connection connects to producer. This
+    connection receives all commands and adds them to event loop. The other
+    connection send the result of the execution. This means it acts as producer.
     """
 
     def __init__(self, listen, send):
@@ -31,44 +36,44 @@ class RpcReceiver:
     @property
     def send(self):
         """
-        Returns the url on which this client send
-        it's notifications.
+        Returns the URL where the results are send to.
 
         Returns
         -------
-            A given url.
+            string
         """
         return self._send
 
     @property
     def listen(self):
         """
-        Returns the url on which this client listens on.
+        Returns the URL where the commands are received from.
 
         Returns
         -------
-            A given url.
+            string
         """
         return self._listen
 
     def close(self):
         """
-        Close the connections to the servers.
+        Closes all connections.
         """
+
         logging.debug("Got close call ... closing connections.")
         self.closed = True
         try:
             self.sender_session.close()
             self.listen_session.close()
-        except:
+        except:  #pylint: disable=W0702
             pass
 
     @asyncio.coroutine
     def run(self):
         """
-        Listen on a connection and executes the incoming commands,
-        if it is a valid command. The result will be send (notified)
-        via the send connection.
+        Listens on the receiver socket and executes the incoming commands. If
+        the command is not JSON encoded an Status.err(...) with the exception is
+        written to the other socket. Same for failed executions.
         """
 
         logging.debug("Connect to sender.")
