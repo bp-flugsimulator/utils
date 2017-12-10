@@ -3,7 +3,7 @@ Test file for the status module.
 """
 
 import unittest
-from utils.status import Status
+from utils.status import Status, FormatError
 
 
 class TestStatus(unittest.TestCase):
@@ -127,8 +127,42 @@ class TestStatus(unittest.TestCase):
     @unittest.expectedFailure
     def test_err_with_no_serializable(self):
         """
-        Testcase wich failes because the input object is not
+        Testcase which failes because the input object is not
         serializable.
         """
         status = Status.err(ValueError("This is a value error."))
         status.to_json()
+
+    def test_status_init_value_error(self):
+        """
+        Testcase which tests for a ValueError in status.__init__
+        """
+        self.assertRaises(ValueError, Status.__init__, None, "", "")
+
+    def test_from_json_no_status(self):
+        """
+        Testcase which tests for a FormatError during construction from a 
+        json object without a status field
+        """
+        self.assertRaises(FormatError, Status.from_json, '{"status":""}')
+
+    def test_from_json_key_error(self):
+        """
+        Tests if an FormatError gets thrown if the json object has a
+        missing field
+        """
+        self.assertRaises(FormatError, Status.from_json, '{}')
+
+    def test_status_is_ok(self):
+        """
+        Tests if a status that has no error returns true on
+        is_ok()
+        """
+        self.assertTrue(Status(Status.ID_OK, "").is_ok())
+
+    def test_status_is_err(self):
+        """
+        Tests if a status that contains an error returns true on
+        is_err()
+        """
+        self.assertTrue(Status(Status.ID_ERR, "").is_err())

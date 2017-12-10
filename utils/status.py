@@ -12,10 +12,6 @@ class FormatError(Exception):
     The given data are not valid encoded.
     """
 
-    def __init__(self, message):
-        super(FormatError).__init__(self)
-        self.message = message
-
 
 class Status:
     """

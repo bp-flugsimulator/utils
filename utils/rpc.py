@@ -16,19 +16,11 @@ class ReceiverError(Exception):
     the @Rpc.method.
     """
 
-    def __init__(self, message):
-        super(ReceiverError).__init__(self)
-        self.message = message
-
 
 class ProtocolError(Exception):
     """
     The input/output was not protocol conform.
     """
-
-    def __init__(self, message):
-        super(ProtocolError).__init__(self)
-        self.message = message
 
 
 def method_wrapper(method_list):
