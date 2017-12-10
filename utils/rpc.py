@@ -148,10 +148,6 @@ class Command:
             if not isinstance(json_data[cls.ID_COMMAND], str):
                 raise ProtocolError("Command has to be a string.")
 
-            for key in json_data[cls.ID_ARGS].keys():
-                if not isinstance(key, str):
-                    raise ProtocolError("Wrong format for key in arguments.")
-
             return cls(json_data[cls.ID_COMMAND], **json_data[cls.ID_ARGS])
         except KeyError as err:
             raise ProtocolError(

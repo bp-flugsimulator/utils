@@ -3,7 +3,7 @@ Test file for the rpc module.
 """
 
 import unittest
-from utils import Rpc, Command
+from utils import Rpc, Command, ProtocolError
 
 
 class TestRpc(unittest.TestCase):
@@ -100,3 +100,29 @@ class TestCommand(unittest.TestCase):
         Uses positional arguments, which is not supported.
         """
         Command("test_func", 2, "vier")  #pylint: disable=E1121
+
+    def test_command_from_json_ProtocolError_args(self):
+        """
+        Expects ProtocolError from from_json if args is not a dictionary
+        """
+        string = '{"command": "test_func", "args": 2 }'
+        self.assertRaises(ProtocolError, Command.from_json, string)
+
+    def test_command_from_json_ProtocolError_command(self):
+        """
+        Expects ProtocolError from from_json if command is not a string
+        """
+        string = '{"command": 2, "args": {"a": 2, "b": "vier"}}'
+        self.assertRaises(ProtocolError, Command.from_json, string)
+
+        #    def test_command_from_json_ProtocolError_argumentkeys(self):
+        """
+        Expects ProtocolError from from_json if keys in arguments are no strings
+        """
+
+    def test_command_from_json_KeyError(self):
+        """
+        Expects KeyError from from_json if either command or args is missing
+        """
+        string = '{"args": {"a": 2, "b": "vier"}}'
+        self.assertRaises(ProtocolError, Command.from_json, string)
