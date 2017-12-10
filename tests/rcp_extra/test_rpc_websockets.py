@@ -125,7 +125,6 @@ class Server:
         process.terminate()
         logging.debug("Wait for process to close.")
         loop.run_until_complete(process.wait())
-        loop.close()
 
     def to_json(self):
         """
@@ -169,9 +168,10 @@ class TestRpcReceiver(unittest.TestCase):
     """
     Testcases for the RpcReceiver class.
     """
+
     @classmethod
     def setUpClass(cls):
-        super(TestRpcReceiver, cls).setUpClass()
+        super().setUpClass()
 
         root = logging.getLogger()
         root.setLevel(logging.DEBUG)
@@ -185,6 +185,14 @@ class TestRpcReceiver(unittest.TestCase):
         )
         ch.setFormatter(formatter)
         root.addHandler(ch)
+
+    def setUp(self):
+        Rpc.clear()
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        asyncio.get_event_loop().close()
 
     def test_math_add_async(self):
         """
@@ -203,6 +211,33 @@ class TestRpcReceiver(unittest.TestCase):
                 integer2: second operand
             """
             yield from asyncio.sleep(1)
+            res = (integer1 + integer2)
+            return res
+
+        server = Server(
+            [
+                Command("math_add", integer1=1, integer2=2).to_json(),
+            ],
+            [
+                Status.ok(3).to_json(),
+            ],
+        ).run()
+
+    def test_math_add(self):
+        """
+        Testing simple math add function with async features.
+        """
+
+        @Rpc.method
+        def math_add(integer1, integer2):
+            """
+            Simple add function with async.
+
+            Arguments
+            ---------
+                integer1: first operand
+                integer2: second operand
+            """
             res = (integer1 + integer2)
             return res
 
