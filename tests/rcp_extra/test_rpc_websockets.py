@@ -191,40 +191,7 @@ class CloseFailServer(Server):
             'ws://127.0.0.1:8750/send_to_server',
         )
 
-        @asyncio.coroutine
-        def wait_for_end():
-            """
-            Wrapper for event loop.
-            """
-            finished, pending = yield from asyncio.wait(
-                [
-                    asyncio.ensure_future(recv.run()),
-                    asyncio.ensure_future(process.wait()),
-                ],
-                return_when=asyncio.FIRST_COMPLETED,
-            )
-
-            logging.debug("wait_for_end() -> finished")
-            for fin in finished:
-                if fin.exception() is not None:
-                    try:
-                        raise fin.exception()
-                    except websockets.exceptions.ConnectionClosed as err:
-                        if err.code == 1001:
-                            pass
-                        else:
-                            raise err
-                    except Exception as err:
-                        raise err
-
-                if fin.result == 1:
-                    raise ValueError("Program return EXIT_FAILURE")
-
-            for pen in pending:
-                pen.cancel()
-
-        logging.debug("Running main loop.")
-        #loop.run_until_complete(wait_for_end())
+        logging.debug("Closing Receiver")
         recv.close()
         logging.debug("Send SIGTERM to child process.")
         process.terminate()
