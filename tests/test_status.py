@@ -166,3 +166,9 @@ class TestStatus(unittest.TestCase):
         is_err()
         """
         self.assertTrue(Status(Status.ID_ERR, "").is_err())
+
+    def test_as_js(self):
+        """
+        Tests if Status.as_js() returns a string
+        """
+        isinstance(Status.as_js(),str)
