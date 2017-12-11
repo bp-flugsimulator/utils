@@ -5,16 +5,7 @@ client which listens on the websocket.
 """
 
 import json
-__all__ = ["ReceiverError", "ProtocolError", "Rpc", "Command"]
-
-
-class ReceiverError(Exception):
-    """
-    An error occurred while the execution.
-    This error should be used inside the
-    RPC function, which is identified by
-    the @Rpc.method.
-    """
+__all__ = ["ProtocolError", "Rpc", "Command"]
 
 
 class ProtocolError(Exception):

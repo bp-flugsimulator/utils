@@ -9,7 +9,7 @@ import websockets
 
 __all__ = ["RpcReceiver"]
 
-from utils import Command, ReceiverError, Rpc, Status
+from utils import Command, Rpc, Status
 
 
 class RpcReceiver:
@@ -85,18 +85,14 @@ class RpcReceiver:
             while not self.closed:
                 logging.debug("Listen on command channel.")
                 data = yield from self.listen_session.recv()
-                try:
-                    cmd = Command.from_json(data)
-                    logging.debug("Received command {}.".format(cmd))
-                    callable_command = Rpc.get(cmd.func)
-                    logging.debug("Found correct function ... calling.")
-                    res = yield from asyncio.coroutine(callable_command)(
-                        **cmd.args)
-                    result = Status.ok(res)
-                    logging.debug("Function returned {}.".format(result))
-                except ReceiverError as err:
-                    result = Status.err(str(err))
-                    logging.debug("Function returned {}.".format(result))
+                cmd = Command.from_json(data)
+                logging.debug("Received command {}.".format(cmd))
+                callable_command = Rpc.get(cmd.func)
+                logging.debug("Found correct function ... calling.")
+                res = yield from asyncio.coroutine(callable_command)(
+                    **cmd.args)
+                result = Status.ok(res)
+                logging.debug("Function returned {}.".format(result))
 
                 yield from self.sender_session.send(result.to_json())
         except websockets.exceptions.ConnectionClosed as err:
