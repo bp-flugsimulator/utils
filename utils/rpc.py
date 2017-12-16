@@ -66,11 +66,15 @@ class Rpc:
             A function handle if  a function with the given name
             was found. Returns None if no function was found.
 
+        Except
+        ------
+            ProtocolError the function is unknown
         """
         for method in Rpc.methods:
             if method.__name__ == func:
                 return method
-        return None
+
+        raise ProtocolError("unknown function '{}'".format(func))
 
     def __iter__(self):
         return self.methods.__iter__()

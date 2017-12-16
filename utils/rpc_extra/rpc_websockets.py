@@ -93,7 +93,6 @@ class RpcReceiver:
                     **cmd.args)
                 result = Status.ok(res)
                 logging.debug("Function returned {}.".format(result))
-
                 yield from self.sender_session.send(result.to_json())
         except websockets.exceptions.ConnectionClosed as err:
             logging.error(str(err))

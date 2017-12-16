@@ -40,7 +40,7 @@ class TestRpc(unittest.TestCase):
         """
 
         self.assertIterateEqual(Rpc(), [])
-        self.assertEqual(Rpc.get("test"), None)
+        self.assertRaises(ProtocolError, Rpc.get, "test")
 
     def test_rpc_multiple(self):
         """
