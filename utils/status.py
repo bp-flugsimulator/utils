@@ -33,13 +33,18 @@ class Status:
                 "Status only accept a string with `{}` or `{}`".format(
                     Status.ID_OK, Status.ID_ERR))
         else:
-            self._status = status
-            self._payload = payload
+            self.__status = status
+            self.__payload = payload
 
     def __eq__(self, other):
-        return self.status() == other.status() and self.payload(
-        ) == other.payload()
+        return self.status == other.status and self.payload == other.payload
 
+    def __iter__(self):
+        for key, val in vars(Status).items():
+            if isinstance(val, property):
+                yield (key, self.__getattribute__(key))
+
+    @property
     def status(self):
         """
         Returns the raw status string of this instance. Using this function is
@@ -49,8 +54,9 @@ class Status:
         -------
             string: a status
         """
-        return self._status
+        return self.__status
 
+    @property
     def payload(self):
         """
         Returns the playload of this instance.
@@ -59,7 +65,7 @@ class Status:
         -------
             object: a payload
         """
-        return self._payload
+        return self.__payload
 
     def is_err(self):
         """
@@ -69,7 +75,7 @@ class Status:
         ------
             boolean
         """
-        return self.status() == Status.ID_ERR
+        return self.status == Status.ID_ERR
 
     def is_ok(self):
         """
@@ -79,7 +85,7 @@ class Status:
         ------
             boolean
         """
-        return self.status() == Status.ID_OK
+        return self.status == Status.ID_OK
 
     @classmethod
     def ok(cls, payload):  #pylint: disable=C0103
@@ -120,9 +126,7 @@ class Status:
             If message and result is set at the same time
             an error will be raised as well.
         """
-
-        data = {self.ID_STATUS: self.status(), self.ID_PAYLOAD: self.payload()}
-        return json.dumps(data)
+        return json.dumps(dict(self))
 
     @classmethod
     def from_json(cls, data):

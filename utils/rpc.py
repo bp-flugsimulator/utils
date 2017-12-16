@@ -94,32 +94,57 @@ class Rpc:
 
 class Command:
     """
-    Represents an rpc call which holds information
-    about the function name and arguments.
-    A valid Command is a function name as a string
-    and a dict with all function arguments.
+    Represents an rpc call which holds information about the function name and
+    arguments. A valid Command is a function name as a string and a dict with
+    all function arguments.
     """
 
-    ID_COMMAND = 'command'
-    ID_ARGS = 'args'
+    ID_METHOD = 'method'
+    ID_ARGUMENTS = 'arguments'
 
-    def __init__(self, func, **kwargs):
-        self.func = func
-        self.args = kwargs
+    def __init__(self, method, **kwargs):
+        self.__method = method
+        self.__arguments = kwargs
 
     def __eq__(self, other):
-        return self.func == other.func and self.args == other.args
+        return self.method == other.method and self.arguments == other.arguments
+
+    def __iter__(self):
+        for key, val in vars(Command).items():
+            if isinstance(val, property):
+                yield (key, self.__getattribute__(key))
+
+    @property
+    def method(self):
+        """
+        Getter for the name of the method.
+
+        Returns
+        -------
+            A string which identifies the method.
+        """
+        return self.__method
+
+    @property
+    def arguments(self):
+        """
+        Getter for the argument dictionary.
+
+        Returns
+        -------
+            A dictionary of arguments.
+        """
+        return self.__arguments
 
     def to_json(self):
         """
-        Formats the command into a json string.
+        Formats the method into a json string.
 
         Returns
         -------
             A json string.
         """
-        data = {self.ID_COMMAND: self.func, self.ID_ARGS: self.args}
-        return json.dumps(data)
+        return json.dumps(dict(self))
 
     @classmethod
     def from_json(cls, data):
@@ -142,13 +167,13 @@ class Command:
         """
         json_data = json.loads(data)
         try:
-            if not isinstance(json_data[cls.ID_ARGS], dict):
+            if not isinstance(json_data[cls.ID_ARGUMENTS], dict):
                 raise ProtocolError("Args has to be a dictionary.")
 
-            if not isinstance(json_data[cls.ID_COMMAND], str):
-                raise ProtocolError("Command has to be a string.")
+            if not isinstance(json_data[cls.ID_METHOD], str):
+                raise ProtocolError("Method has to be a string.")
 
-            return cls(json_data[cls.ID_COMMAND], **json_data[cls.ID_ARGS])
+            return cls(json_data[cls.ID_METHOD], **json_data[cls.ID_ARGUMENTS])
         except KeyError as err:
             raise ProtocolError(
                 "The given json object has (a) missing key(s). ({})".format(

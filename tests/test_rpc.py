@@ -86,7 +86,10 @@ class TestCommand(unittest.TestCase):
         Uses map arguments.
         """
         cmd = Command("test_func", a=2, b="vier")
-        string = '{"command": "test_func", "args": {"a": 2, "b": "vier"}}'
+        string = '{{"{}": "test_func", "{}": {{"a": 2, "b": "vier" }}}}'.format(
+            Command.ID_METHOD,
+            Command.ID_ARGUMENTS,
+        )
         cmd_string = Command.from_json(string)
         cmd_new = Command.from_json(cmd.to_json())
 
@@ -105,14 +108,20 @@ class TestCommand(unittest.TestCase):
         """
         Expects ProtocolError from from_json if args is not a dictionary
         """
-        string = '{"command": "test_func", "args": 2 }'
+        string = '{{"{}": "test_func", "{}": 2 }}'.format(
+            Command.ID_METHOD,
+            Command.ID_ARGUMENTS,
+        )
         self.assertRaises(ProtocolError, Command.from_json, string)
 
     def test_command_from_json_ProtocolError_command(self):
         """
         Expects ProtocolError from from_json if command is not a string
         """
-        string = '{"command": 2, "args": {"a": 2, "b": "vier"}}'
+        string = '{{"{}": 2, "{}": {{"a": 2, "b": "vier"}}}}'.format(
+            Command.ID_METHOD,
+            Command.ID_ARGUMENTS,
+        )
         self.assertRaises(ProtocolError, Command.from_json, string)
 
         #    def test_command_from_json_ProtocolError_argumentkeys(self):
@@ -124,5 +133,6 @@ class TestCommand(unittest.TestCase):
         """
         Expects KeyError from from_json if either command or args is missing
         """
-        string = '{"args": {"a": 2, "b": "vier"}}'
+        string = '{{"{}": {{"a": 2, "b": "vier"}}}}'.format(
+            Command.ID_ARGUMENTS)
         self.assertRaises(ProtocolError, Command.from_json, string)

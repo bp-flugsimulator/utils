@@ -88,10 +88,10 @@ class RpcReceiver:
                 try:
                     cmd = Command.from_json(data)
                     logging.debug("Received command {}.".format(cmd))
-                    callable_command = Rpc.get(cmd.func)
+                    callable_command = Rpc.get(cmd.method)
                     logging.debug("Found correct function ... calling.")
                     res = yield from asyncio.coroutine(callable_command)(
-                        **cmd.args)
+                        **cmd.arguments)
                     result = Status.ok(res)
                     logging.debug("Function returned {}.".format(result))
                 except ReceiverError as err:
