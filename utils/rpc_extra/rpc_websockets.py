@@ -86,7 +86,7 @@ class RpcReceiver:
                 logging.debug("Listen on command channel.")
                 data = yield from self.listen_session.recv()
                 cmd = Command.from_json(data)
-                logging.debug("Received command {}.".format(cmd))
+                logging.debug("Received command {}.".format(repr(cmd))
                 callable_command = Rpc.get(cmd.func)
                 logging.debug("Found correct function ... calling.")
                 res = yield from asyncio.coroutine(callable_command)(
