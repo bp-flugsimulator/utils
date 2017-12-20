@@ -81,19 +81,23 @@ class RpcReceiver:
         logging.debug("Connect to listener.")
         self.listen_session = yield from self.listen_connection
 
+        @asyncio.coroutine
+        def handle_message(data):
+            cmd = Command.from_json(data)
+            logging.debug("Received command {}.".format(cmd.to_json()))
+            callable_command = Rpc.get(cmd.method)
+            logging.debug("Found correct function ... calling.")
+            res = yield from asyncio.coroutine(callable_command)(
+                **cmd.arguments)
+            result = Status.ok(res)
+            logging.debug("Function returned {}.".format(result))
+            yield from self.sender_session.send(result.to_json())
+
         try:
             while not self.closed:
                 logging.debug("Listen on command channel.")
                 data = yield from self.listen_session.recv()
-                cmd = Command.from_json(data)
-                logging.debug("Received command {}.".format(repr(cmd)))
-                callable_command = Rpc.get(cmd.method)
-                logging.debug("Found correct function ... calling.")
-                res = yield from asyncio.coroutine(callable_command)(
-                    **cmd.arguments)
-                result = Status.ok(res)
-                logging.debug("Function returned {}.".format(result))
-                yield from self.sender_session.send(result.to_json())
+                asyncio.get_event_loop().create_task(handle_message(data))
         except websockets.exceptions.ConnectionClosed as err:
             logging.error(str(err))
             if err.code != 1000:
