@@ -138,7 +138,7 @@ class Server:
 
 
 class CloseFailServer(Server):
-     def run(self):
+    def run(self):
         """
         Returns the subprocess handler.abs
 
@@ -197,7 +197,6 @@ class CloseFailServer(Server):
         process.terminate()
         logging.debug("Wait for process to close.")
         loop.run_until_complete(process.wait())
-
 
 
 @asyncio.coroutine
@@ -313,10 +312,9 @@ class TestRpcReceiver(unittest.TestCase):
             ],
         ).run()
 
-
     def test_error_close(self):
         """
-        Tests if RPC-Receiver doesnt raise an exception its closed early.
+        Tests if RPC-Receiver doesn't raise an exception its closed early.
         """
 
         @Rpc.method
@@ -341,3 +339,19 @@ class TestRpcReceiver(unittest.TestCase):
                 Status.ok(3).to_json(),
             ],
         ).run()
+
+    def test_rpc_method_raise_exeption(self):
+        """
+        Tests what happens if a rpc method raises an exception
+        """
+
+        @Rpc.method
+        @asyncio.coroutine
+        def foo():
+            raise Exception('bar')
+
+        server = Server([
+            Command("foo").to_json(),
+        ], [
+            Status.err(str(Exception('bar'))).to_json(),
+        ]).run()
