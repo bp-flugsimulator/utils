@@ -87,10 +87,17 @@ class RpcReceiver:
             logging.debug("Received command {}.".format(cmd.to_json()))
             callable_command = Rpc.get(cmd.method)
             logging.debug("Found correct function ... calling.")
-            res = yield from asyncio.coroutine(callable_command)(
-                **cmd.arguments)
-            result = Status.ok(res)
-            logging.debug("Function returned {}.".format(result))
+
+            try:
+                res = yield from asyncio.coroutine(callable_command)(
+                    **cmd.arguments)
+
+                result = Status.ok(res)
+                logging.debug("Function returned {}.".format(result))
+            except Exception as err:
+                result = Status.err(str(err))
+                logging.info("Function raise Exception"))
+
             yield from self.sender_session.send(result.to_json())
 
         try:
