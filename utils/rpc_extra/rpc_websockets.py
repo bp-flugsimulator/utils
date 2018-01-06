@@ -96,7 +96,7 @@ class RpcReceiver:
                 logging.debug("Function returned {}.".format(result))
             except Exception as err:
                 result = Status.err(str(err))
-                logging.info("Function raise Exception"))
+                logging.info("Function raise Exception")
 
             yield from self.sender_session.send(result.to_json())
 
