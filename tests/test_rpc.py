@@ -134,3 +134,11 @@ class TestCommand(unittest.TestCase):
         string = '{{"{}": {{"a": 2, "b": "vier"}}}}'.format(
             Command.ID_ARGUMENTS)
         self.assertRaises(ProtocolError, Command.from_json, string)
+
+    def test_command_from_json_uuid_no_string(self):
+        """
+        Expects ValueError from from_json if the uuid is no str
+        """
+        string = '{{"{}": "name", "{}": {{"a": "drei", "b": "vier"}}, "{}":2}}'.format(
+            Command.ID_METHOD, Command.ID_ARGUMENTS, Command.ID_UUID)
+        self.assertRaises(ProtocolError, Command.from_json, string)

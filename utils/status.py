@@ -207,7 +207,7 @@ class Status:
         return """
             class Status {{
                 constructor (status, payload) {{
-                    if (status != "{id_ok}" && status != "{id_err}") {{
+                    if (status !== "{id_ok}" && status !== "{id_err}") {{
                         throw new TypeError("Status only accept a string with `{id_ok}` or `{id_err}`..");
                     }} else {{
                         this._{id_status} = status;
@@ -218,19 +218,19 @@ class Status:
                             for (i = 0; i < 32; i++) {{
                                 random = Math.random() * 16 | 0;
 
-                                if (i == 8 || i == 12 || i == 16 || i == 20) {{
+                                if (i === 8 || i === 12 || i === 16 || i === 20) {{
                                     uuid += "-"
                                 }}
-                                uuid += (i == 12 ? 4 : (i == 16 ? (random & 3 | 8) : random)).toString(16);
+                                uuid += (i === 12 ? 4 : (i === 16 ? (random & 3 | 8) : random)).toString(16);
                         }}
                         this._{id_uuid} = uuid;
                     }}
                 }}
 
                 equals(other) {{
-                    return this.{id_status} == other.{id_status} &&
-                        this.{id_payload} == other.{id_payload} &&
-                        this.{id_uuid} == other.{id_uuid};
+                    return this.{id_status} === other.{id_status} &&
+                        this.{id_payload} === other.{id_payload} &&
+                        this.{id_uuid} === other.{id_uuid};
                 }}
 
                 get status() {{
@@ -272,7 +272,7 @@ class Status:
                 static from_json(data) {{
                     let json = JSON.parse(data);
                     let object = new Status(json["{id_status}"], json["{id_payload}"]);
-                    object.uuid = json["{id_uuid}"]
+                    object.uuid = json["{id_uuid}"];
                     return object;
                 }}
             }}
