@@ -16,7 +16,7 @@ class TestStatus(unittest.TestCase):
         Testcase with simple string.
         """
         status = Status.ok("Hello World")
-        string = '{"status": "ok", "payload": "Hello World"}'
+        string = '{"status": "ok", "payload": "Hello World", "uuid": "' + status.uuid + '"}'
         status_string = Status.from_json(string)
         status_new = Status.from_json(status.to_json())
 
@@ -29,7 +29,7 @@ class TestStatus(unittest.TestCase):
         Testcase with simple array of string.
         """
         status = Status.ok(["Hello World", "Bye"])
-        string = '{"status": "ok", "payload": ["Hello World", "Bye"]}'
+        string = '{"status": "ok", "payload": ["Hello World", "Bye"], "uuid": "' + status.uuid + '"}'
         status_string = Status.from_json(string)
         status_new = Status.from_json(status.to_json())
 
@@ -42,7 +42,7 @@ class TestStatus(unittest.TestCase):
         Testcase with simple array of integer.
         """
         status = Status.ok([0, 1, 2, 3])
-        string = '{"status": "ok", "payload": [0, 1, 2, 3]}'
+        string = '{"status": "ok", "payload": [0, 1, 2, 3], "uuid": "' + status.uuid + '"}'
         status_string = Status.from_json(string)
         status_new = Status.from_json(status.to_json())
 
@@ -55,7 +55,7 @@ class TestStatus(unittest.TestCase):
         Testcase with map with mixed objects.
         """
         status = Status.ok({"Hello World": "Bye", "Integer": 0})
-        string = '{"status": "ok", "payload": {"Hello World": "Bye", "Integer": 0}}'
+        string = '{"status": "ok", "payload": {"Hello World": "Bye", "Integer": 0}, "uuid": "' + status.uuid + '"}'
         status_string = Status.from_json(string)
         status_new = Status.from_json(status.to_json())
 
@@ -68,7 +68,7 @@ class TestStatus(unittest.TestCase):
         Testcase with simple string.
         """
         status = Status.err("Hello World")
-        string = '{"status": "err", "payload": "Hello World"}'
+        string = '{"status": "err", "payload": "Hello World", "uuid": "' + status.uuid + '"}'
         status_string = Status.from_json(string)
         status_new = Status.from_json(status.to_json())
 
@@ -81,7 +81,7 @@ class TestStatus(unittest.TestCase):
         Testcase with simple array of string.
         """
         status = Status.err(["Hello World", "Bye"])
-        string = '{"status": "err", "payload": ["Hello World", "Bye"]}'
+        string = '{"status": "err", "payload": ["Hello World", "Bye"], "uuid": "' + status.uuid + '"}'
         status_string = Status.from_json(string)
         status_new = Status.from_json(status.to_json())
 
@@ -94,7 +94,7 @@ class TestStatus(unittest.TestCase):
         Testcase with simple array of integer.
         """
         status = Status.err([0, 1, 2, 3])
-        string = '{"status": "err", "payload": [0, 1, 2, 3]}'
+        string = '{"status": "err", "payload": [0, 1, 2, 3], "uuid": "' + status.uuid + '"}'
         status_string = Status.from_json(string)
         status_new = Status.from_json(status.to_json())
 
@@ -107,7 +107,7 @@ class TestStatus(unittest.TestCase):
         Testcase with map with mixed objects.
         """
         status = Status.err({"Hello World": "Bye", "Integer": 0})
-        string = '{"status": "err", "payload": {"Hello World": "Bye", "Integer": 0}}'
+        string = '{"status": "err", "payload": {"Hello World": "Bye", "Integer": 0}, "uuid": "' + status.uuid + '"}'
         status_string = Status.from_json(string)
         status_new = Status.from_json(status.to_json())
 
@@ -171,4 +171,4 @@ class TestStatus(unittest.TestCase):
         """
         Tests if Status.as_js() returns a string
         """
-        isinstance(Status.as_js(),str)
+        isinstance(Status.as_js(), str)

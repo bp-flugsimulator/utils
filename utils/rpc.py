@@ -4,6 +4,8 @@ rpc via websockets. The command executor is a
 client which listens on the websocket.
 """
 
+from uuid import uuid4
+
 import json
 __all__ = ["ProtocolError", "Rpc", "Command"]
 
@@ -96,13 +98,15 @@ class Command:
 
     ID_METHOD = 'method'
     ID_ARGUMENTS = 'arguments'
+    ID_UUID = 'uuid'
 
     def __init__(self, method, **kwargs):
         self.__method = method
         self.__arguments = kwargs
+        self.__uuid = uuid4().hex
 
     def __eq__(self, other):
-        return self.method == other.method and self.arguments == other.arguments
+        return self.method == other.method and self.arguments == other.arguments and self.__uuid == self.__uuid
 
     def __iter__(self):
         for key, val in vars(Command).items():
@@ -130,6 +134,17 @@ class Command:
             A dictionary of arguments.
         """
         return self.__arguments
+
+    @property
+    def uuid(self):
+        """
+        Getter for uuid.
+
+        Returns
+        -------
+            A hex value representing a universally unique identifier
+        """
+        return self.__uuid
 
     def to_json(self):
         """
@@ -168,7 +183,12 @@ class Command:
             if not isinstance(json_data[cls.ID_METHOD], str):
                 raise ProtocolError("Method has to be a string.")
 
-            return cls(json_data[cls.ID_METHOD], **json_data[cls.ID_ARGUMENTS])
+            if not isinstance(json_data[cls.ID_UUID], str):
+                raise ProtocolError("UUID has to be a string.")
+
+            obj = cls(json_data[cls.ID_METHOD], **json_data[cls.ID_ARGUMENTS])
+            obj.__uuid = json_data[cls.ID_UUID]
+            return obj
         except KeyError as err:
             raise ProtocolError(
                 "The given json object has (a) missing key(s). ({})".format(

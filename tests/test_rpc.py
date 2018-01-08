@@ -86,10 +86,8 @@ class TestCommand(unittest.TestCase):
         Uses map arguments.
         """
         cmd = Command("test_func", a=2, b="vier")
-        string = '{{"{}": "test_func", "{}": {{"a": 2, "b": "vier" }}}}'.format(
-            Command.ID_METHOD,
-            Command.ID_ARGUMENTS,
-        )
+        string = '{{"{}": "test_func", "{}": {{"a": 2, "b": "vier" }}, "{}": "{}"}}'.format(
+            Command.ID_METHOD, Command.ID_ARGUMENTS, Command.ID_UUID, cmd.uuid)
         cmd_string = Command.from_json(string)
         cmd_new = Command.from_json(cmd.to_json())
 

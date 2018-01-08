@@ -2,6 +2,9 @@
 This module contains a status which
 can be encoded into a json string.
 """
+
+from uuid import uuid4
+
 import json
 
 __all__ = ["FormatError", "Status"]
@@ -26,8 +29,9 @@ class Status:
     ID_ERR = "err"
     ID_STATUS = "status"
     ID_PAYLOAD = "payload"
+    ID_UUID = "uuid"
 
-    def __init__(self, status, payload):
+    def __init__(self, status, payload, uuid=uuid4().hex):
         if status != Status.ID_OK and status != Status.ID_ERR:
             raise ValueError(
                 "Status only accept a string with `{}` or `{}`".format(
@@ -35,9 +39,10 @@ class Status:
         else:
             self.__status = status
             self.__payload = payload
+            self.__uuid = uuid
 
     def __eq__(self, other):
-        return self.status == other.status and self.payload == other.payload
+        return self.status == other.status and self.payload == other.payload and self.uuid == other.uuid
 
     def __iter__(self):
         for key, val in vars(Status).items():
@@ -66,6 +71,29 @@ class Status:
             object: a payload
         """
         return self.__payload
+
+    @property
+    def uuid(self):
+        """
+        Returns the uuid of this instance.
+
+        Returns
+        -------
+            A hex value representing a universally unique identifier
+        """
+        return self.__uuid
+
+    @uuid.setter
+    def uuid(self, uuid):
+        """
+        Setter for __uuid.
+
+        Argument
+        --------
+        uuid: str
+            A hex value representing a universally unique identifier
+        """
+        self.__uuid = uuid
 
     def is_err(self):
         """
@@ -152,9 +180,13 @@ class Status:
             status = json_data[cls.ID_STATUS]
 
             if status == cls.ID_OK:
-                return cls.ok(json_data[cls.ID_PAYLOAD])
+                object = cls.ok(json_data[cls.ID_PAYLOAD])
+                object.__uuid = json_data[cls.ID_UUID]
+                return object
             elif status == cls.ID_ERR:
-                return cls.err(json_data[cls.ID_PAYLOAD])
+                object = cls.err(json_data[cls.ID_PAYLOAD])
+                object.__uuid = json_data[cls.ID_UUID]
+                return object
             else:
                 raise FormatError("Missing status field in Status.")
 
@@ -180,12 +212,25 @@ class Status:
                     }} else {{
                         this._{id_status} = status;
                         this._{id_payload} = payload;
+                        
+                        //generate uuid
+                        let uuid = "", i, random;
+                            for (i = 0; i < 32; i++) {{
+                                random = Math.random() * 16 | 0;
+
+                                if (i == 8 || i == 12 || i == 16 || i == 20) {{
+                                    uuid += "-"
+                                }}
+                                uuid += (i == 12 ? 4 : (i == 16 ? (random & 3 | 8) : random)).toString(16);
+                        }}
+                        this._{id_uuid} = uuid;
                     }}
                 }}
 
                 equals(other) {{
                     return this.{id_status} == other.{id_status} &&
-                        this.{id_payload} == other.{id_payload};
+                        this.{id_payload} == other.{id_payload} &&
+                        this.{id_uuid} == other.{id_uuid};
                 }}
 
                 get status() {{
@@ -194,6 +239,14 @@ class Status:
 
                 get payload() {{
                     return this._{id_payload};
+                }}
+
+                get uuid(){{
+                    return this._{id_uuid};
+                }}
+                
+                set uuid(id){{
+                    this._{id_uuid} = id;
                 }}
 
                 is_ok() {{
@@ -213,12 +266,14 @@ class Status:
                 }}
 
                 to_json() {{
-                    return JSON.stringify({{ "{id_status}": this.status, "{id_payload}": this.payload }});
+                    return JSON.stringify({{ "{id_status}": this.status, "{id_payload}": this.payload, "{id_uuid}": this.uuid }});
                 }}
 
                 static from_json(data) {{
-                    var json = JSON.parse(data);
-                    return new Status(json["{id_status}"], json["{id_payload}"]);
+                    let json = JSON.parse(data);
+                    let object = new Status(json["{id_status}"], json["{id_payload}"]);
+                    object.uuid = json["{id_uuid}"]
+                    return object;
                 }}
             }}
         """.format(
@@ -226,4 +281,5 @@ class Status:
             id_err=Status.ID_ERR,
             id_status=Status.ID_STATUS,
             id_payload=Status.ID_PAYLOAD,
+            id_uuid=Status.ID_UUID,
         )

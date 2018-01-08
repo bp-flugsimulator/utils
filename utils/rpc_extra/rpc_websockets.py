@@ -89,16 +89,20 @@ class RpcReceiver:
             logging.debug("Found correct function ... calling.")
 
             try:
-                res = yield from asyncio.coroutine(callable_command)(
+                result = yield from asyncio.coroutine(callable_command)(
                     **cmd.arguments)
-
-                result = Status.ok(res)
+                status_code = Status.ID_OK
                 logging.debug("Function returned {}.".format(result))
             except Exception as err:
-                result = Status.err(str(err))
-                logging.info("Function raise Exception")
+                result = str(err)
+                status_code = Status.ID_ERR
+                logging.info("Function raise Exception({})".format(result))
 
-            yield from self.sender_session.send(result.to_json())
+            yield from self.sender_session.send(
+                Status(status_code, {
+                    'method': cmd.method,
+                    'result': result
+                }, cmd.uuid).to_json())
 
         try:
             while not self.closed:

@@ -276,12 +276,15 @@ class TestRpcReceiver(unittest.TestCase):
             res = (integer1 + integer2)
             return res
 
-        server = Server(
+        cmd = Command("math_add", integer1=1, integer2=2)
+        status = Status.ok({'method': 'math_add', 'result': 3})
+        status.uuid = cmd.uuid
+        Server(
             [
-                Command("math_add", integer1=1, integer2=2).to_json(),
+                cmd.to_json(),
             ],
             [
-                Status.ok(3).to_json(),
+                status.to_json(),
             ],
         ).run()
 
@@ -303,12 +306,16 @@ class TestRpcReceiver(unittest.TestCase):
             res = (integer1 + integer2)
             return res
 
-        server = Server(
+        cmd = Command("math_add", integer1=1, integer2=2)
+        status = Status.ok({'method': 'math_add', 'result': 3})
+        status.uuid = cmd.uuid
+
+        Server(
             [
-                Command("math_add", integer1=1, integer2=2).to_json(),
+                cmd.to_json(),
             ],
             [
-                Status.ok(3).to_json(),
+                status.to_json(),
             ],
         ).run()
 
@@ -331,12 +338,16 @@ class TestRpcReceiver(unittest.TestCase):
             res = (integer1 + integer2)
             return res
 
-        server = CloseFailServer(
+        cmd = Command("math_add", integer1=1, integer2=2)
+        status = Status.ok({'method': 'math_add', 'result': 3})
+        status.uuid = cmd.uuid
+
+        CloseFailServer(
             [
-                Command("math_add", integer1=1, integer2=2).to_json(),
+                cmd.to_json(),
             ],
             [
-                Status.ok(3).to_json(),
+                status.to_json(),
             ],
         ).run()
 
@@ -350,8 +361,15 @@ class TestRpcReceiver(unittest.TestCase):
         def foo():
             raise Exception('bar')
 
-        server = Server([
-            Command("foo").to_json(),
-        ], [
-            Status.err(str(Exception('bar'))).to_json(),
-        ]).run()
+        cmd = Command('foo')
+        status = Status.err({'method': 'foo', 'result': str(Exception('bar'))})
+        status.uuid = cmd.uuid
+
+        Server(
+            [
+                cmd.to_json(),
+            ],
+            [
+                status.to_json(),
+            ],
+        ).run()
