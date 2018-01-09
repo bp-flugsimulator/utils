@@ -31,7 +31,7 @@ class Status:
     ID_PAYLOAD = "payload"
     ID_UUID = "uuid"
 
-    def __init__(self, status, payload, uuid=uuid4().hex):
+    def __init__(self, status, payload, uuid=None):
         if status != Status.ID_OK and status != Status.ID_ERR:
             raise ValueError(
                 "Status only accept a string with `{}` or `{}`".format(
@@ -39,10 +39,13 @@ class Status:
         else:
             self.__status = status
             self.__payload = payload
-            self.__uuid = uuid
+            if uuid is None:
+                self.__uuid = uuid4().hex
+            else:
+                self.__uuid = uuid
 
     def __eq__(self, other):
-        return self.status == other.status and self.payload == other.payload and self.uuid == other.uuid
+        return self.status == other.status and self.payload == other.payload
 
     def __iter__(self):
         for key, val in vars(Status).items():

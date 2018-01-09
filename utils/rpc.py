@@ -106,7 +106,7 @@ class Command:
         self.__uuid = uuid4().hex
 
     def __eq__(self, other):
-        return self.method == other.method and self.arguments == other.arguments and self.__uuid == self.__uuid
+        return self.method == other.method and self.arguments == other.arguments
 
     def __iter__(self):
         for key, val in vars(Command).items():
