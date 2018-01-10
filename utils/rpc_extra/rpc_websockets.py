@@ -9,6 +9,7 @@ import websockets
 
 __all__ = ["RpcReceiver"]
 
+from sys import exit
 from utils import Command, Rpc, Status
 
 
@@ -83,6 +84,9 @@ class RpcReceiver:
 
         @asyncio.coroutine
         def handle_message(data):
+            """
+            Handles an incoming message in a seperat task
+            """
             cmd = Command.from_json(data)
             logging.debug('Received command %s.', cmd.to_json())
             callable_command = Rpc.get(cmd.method)
@@ -98,11 +102,16 @@ class RpcReceiver:
                 status_code = Status.ID_ERR
                 logging.info('Function raise Exception(%s)', result)
 
-            yield from self.sender_session.send(
-                Status(status_code, {
-                    'method': cmd.method,
-                    'result': result
-                }, cmd.uuid).to_json())
+            status = Status(status_code,
+                            {'method': cmd.method,
+                             'result': result}, cmd.uuid)
+
+            try:
+                yield from self.sender_session.send(status.to_json())
+            except err:  # pylint: disable=W0703
+                logging.error('handler failed to send Status(%s)\n%s',
+                              status.to_json(), str(err))
+                exit(1)
 
         try:
             while not self.closed:
@@ -110,7 +119,7 @@ class RpcReceiver:
                 data = yield from self.listen_session.recv()
                 asyncio.get_event_loop().create_task(handle_message(data))
         except websockets.exceptions.ConnectionClosed as err:
-            logging.error(str(err))
+            logging.error('failed to receive message \n%s', str(err))
             if err.code != 1000:
                 raise err
         finally:
