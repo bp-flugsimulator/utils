@@ -65,8 +65,8 @@ class RpcReceiver:
         try:
             self.sender_session.close()
             self.listen_session.close()
-        except Exception as err:  #pylint: disable=W0702
-            logger.info('Error while closing websockets.\n%s', str(err))
+        except Exception as err:  #pylint: disable=W0703
+            logging.info('Error while closing websockets.\n%s', str(err))
 
     @asyncio.coroutine
     def run(self):
