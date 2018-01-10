@@ -6,7 +6,7 @@ __all__ = []
 
 try:
     from . import rpc_websockets
-    from .rpc_websockets import *
+    from .rpc_websockets import RpcReceiver
     __all__.extend(rpc_websockets.__all__)
-except:
+except:  # pylint: disable=W0702
     pass

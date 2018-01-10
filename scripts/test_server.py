@@ -1,13 +1,18 @@
-import logging, sys
+"""
+This module contains a rpc server used for testing.
+"""
+
+import logging
+import sys
 import os
 import asyncio
-import signal
-import websockets
 import json
 import multiprocessing
+import websockets
 
 COLOR_TEXT = '\033[34m'
 COLOR_END = '\033[0m'
+
 
 def run(send, incoming):
     """
@@ -27,7 +32,6 @@ def run(send, incoming):
         server runs on.
         """
 
-
         @asyncio.coroutine
         def handle_consumer(websocket):
             """
@@ -44,7 +48,7 @@ def run(send, incoming):
                     if not incoming:
                         break
 
-            except Exception as err:
+            except Exception as err:  # pylint: disable=W0703
                 logging.debug("Error while receiving/removing item.")
                 logging.debug(err)
                 sys.exit(1)
@@ -55,7 +59,7 @@ def run(send, incoming):
             Handles the outgoing messages.
             """
             for elm in send:
-                logging.debug("Send element: {}".format(elm))
+                logging.debug('Send element: %s', elm)
                 yield from websocket.send(elm)
 
             while True:
@@ -67,8 +71,8 @@ def run(send, incoming):
             Forwards all elements in the queue directly into the
             websocket.
             """
-            logging.debug("New connection on path {}".format(path))
-            if path == "/send_to_server":
+            logging.debug('New connection on path %s', path)
+            if path == '/send_to_server':
                 yield from handle_consumer(websocket)
             elif path == "/receive_from_server":
                 yield from handle_producer(websocket)
@@ -81,8 +85,8 @@ def run(send, incoming):
         try:
             logging.debug("Starting websocket server.")
             server_handle = yield from websockets.serve(
-                handler, host='0.0.0.0', port=8750)
-        except Exception as err:
+                handler, host='127.0.0.1', port=8750)
+        except Exception as err:  #pylint: disable=W0703
             logging.debug(err)
             sys.exit(1)
 
@@ -92,52 +96,47 @@ def run(send, incoming):
         server_handle.close()
         yield from server_handle.wait_closed()
 
-    def handle_stop(signum, frame):
-        """
-        Handle incoming SIGTERM signals.
-        """
-        stop.set_result(None)
-
     loop.run_until_complete(server(stop))
 
 
 if __name__ == '__main__':
 
-    root = logging.getLogger()
-    root.setLevel(logging.DEBUG)
+    ROOT = logging.getLogger()
+    ROOT.setLevel(logging.DEBUG)
 
-    ch = logging.StreamHandler(sys.stdout)
-    ch.setLevel(logging.DEBUG)
-    formatter = logging.Formatter(
+    CHANNEL_HANDLER = logging.StreamHandler(sys.stdout)
+    CHANNEL_HANDLER.setLevel(logging.DEBUG)
+    FORMATTER = logging.Formatter(
         COLOR_TEXT + "[SERVER] [%(asctime)s]: %(message)s" + COLOR_END,
         datefmt='%M:%S')
-    ch.setFormatter(formatter)
-    root.addHandler(ch)
+    CHANNEL_HANDLER.setFormatter(FORMATTER)
+    ROOT.addHandler(CHANNEL_HANDLER)
 
-    logging.debug("Fork method: {}".format(multiprocessing.get_start_method()))
-    logging.debug("This Process pid: {}".format(os.getpid()))
-    logging.debug("Parent Process pid: {}".format(os.getppid()))
+    logging.debug('Fork method: %s', multiprocessing.get_start_method())
+    logging.debug('This Process pid: %d', os.getpid())
+    logging.debug('Parent Process pid: %d', os.getppid())
 
     logging.debug("Reading stdin.")
-    line = sys.stdin.readline()
-    line = line.rstrip()
+    LINE = sys.stdin.readline()
+    LINE = LINE.rstrip()
 
     try:
         logging.debug("Reading json input.")
-        data = json.loads(line)
-        i = data['input']
-        o = data['output']
-    except:
-        logging.debug("Error while getting values (input, output).")
+        DATA = json.loads(LINE)
+        INPUT = DATA['input']
+        OUTPUT = DATA['output']
+    except Exception as err:  # pylint: disable=W0703
+        logging.debug("Error while getting values (input, output).\n%s",
+                      str(err))
         sys.exit(1)
 
-    if not isinstance(i, list):
+    if not isinstance(INPUT, list):
         logging.debug("Input is not instance of list.")
         sys.exit(1)
 
-    if not isinstance(o, list):
+    if not isinstance(OUTPUT, list):
         logging.debug("Input is not instance of list.")
         sys.exit(1)
 
-    run(i, o)
+    run(INPUT, OUTPUT)
     sys.exit(0)

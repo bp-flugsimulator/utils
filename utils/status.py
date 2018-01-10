@@ -183,13 +183,13 @@ class Status:
             status = json_data[cls.ID_STATUS]
 
             if status == cls.ID_OK:
-                object = cls.ok(json_data[cls.ID_PAYLOAD])
-                object.__uuid = json_data[cls.ID_UUID]
-                return object
+                obj = cls.ok(json_data[cls.ID_PAYLOAD])
+                obj.uuid = json_data[cls.ID_UUID]
+                return obj
             elif status == cls.ID_ERR:
-                object = cls.err(json_data[cls.ID_PAYLOAD])
-                object.__uuid = json_data[cls.ID_UUID]
-                return object
+                obj = cls.err(json_data[cls.ID_PAYLOAD])
+                obj.uuid = json_data[cls.ID_UUID]
+                return obj
             else:
                 raise FormatError("Missing status field in Status.")
 

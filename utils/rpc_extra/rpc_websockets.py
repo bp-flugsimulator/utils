@@ -84,7 +84,7 @@ class RpcReceiver:
         @asyncio.coroutine
         def handle_message(data):
             cmd = Command.from_json(data)
-            logging.debug("Received command {}.".format(cmd.to_json()))
+            logging.debug('Received command %s.', cmd.to_json())
             callable_command = Rpc.get(cmd.method)
             logging.debug("Found correct function ... calling.")
 
@@ -92,11 +92,11 @@ class RpcReceiver:
                 result = yield from asyncio.coroutine(callable_command)(
                     **cmd.arguments)
                 status_code = Status.ID_OK
-                logging.debug("Function returned {}.".format(result))
-            except Exception as err:
+                logging.debug('Function returned %s.', result)
+            except Exception as err:  # pylint: disable=W0703
                 result = str(err)
                 status_code = Status.ID_ERR
-                logging.info("Function raise Exception({})".format(result))
+                logging.info('Function raise Exception(%s)', result)
 
             yield from self.sender_session.send(
                 Status(status_code, {
