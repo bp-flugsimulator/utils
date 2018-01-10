@@ -179,7 +179,7 @@ class TestStatus(unittest.TestCase):
         """
         self.assertTrue(Status(Status.ID_ERR, "").is_err())
 
-    def test_as_js(self):
+    def test_as_js(self):  # pylint: disable=R0201
         """
         Tests if Status.as_js() returns a string
         """

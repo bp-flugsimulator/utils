@@ -60,17 +60,17 @@ class TestRpc(unittest.TestCase):
         self.assertEqual(Rpc.get("test2"), test2)
 
     @unittest.expectedFailure
-    def test_rpc_multiple_same_name(self):
+    def test_rpc_multiple_same_name(self):  # pylint: disable=R0201
         """
         Test the output for functions with same names.
         """
 
-        class First:  #pylint: disable=R0903,C0111,W0612
+        class First:  # pylint: disable=R0903,C0111,W0612
             @Rpc.method
             def test(self):
                 pass
 
-        class Second:  #pylint: disable=R0903,C0111,W0612
+        class Second:  # pylint: disable=R0903,C0111,W0612
             @Rpc.method
             def test(self):
                 pass
@@ -96,7 +96,7 @@ class TestCommand(unittest.TestCase):
         self.assertEqual(cmd_string, cmd_new)
 
     @unittest.expectedFailure
-    def test_command_with_args(self):
+    def test_command_with_args(self):  # pylint: disable=R0201
         """
         Uses positional arguments, which is not supported.
         """
@@ -121,11 +121,6 @@ class TestCommand(unittest.TestCase):
             Command.ID_ARGUMENTS,
         )
         self.assertRaises(ProtocolError, Command.from_json, string)
-
-        #    def test_command_from_json_ProtocolError_argumentkeys(self):
-        """
-        Expects ProtocolError from from_json if keys in arguments are no strings
-        """
 
     def test_command_from_json_KeyError(self):
         """

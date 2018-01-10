@@ -9,7 +9,6 @@ import websockets
 
 __all__ = ["RpcReceiver"]
 
-from sys import exit
 from utils import Command, Rpc, Status
 
 

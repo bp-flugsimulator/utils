@@ -1,3 +1,4 @@
+#
 """
 Test file for rpc websockets.
 """
@@ -7,7 +8,6 @@ import json
 import logging
 import multiprocessing
 import os
-import signal
 import sys
 import time
 import unittest
@@ -138,6 +138,11 @@ class Server:
 
 
 class CloseFailServer(Server):
+    """
+    Represents a test server which immediately closes one websocket to
+    produce an error.
+    """
+
     def run(self):
         """
         Returns the subprocess handler.abs
@@ -220,8 +225,8 @@ def forward_stream_to(source, destination):
             if not line:
                 break
             destination.write(line.decode())
-        except:
-            pass
+        except Exception as err:  # pylint: disable=W0703
+            logging.error('Error while forwarding stream:\n%s', str(err))
 
     return None
 
@@ -263,7 +268,7 @@ class TestRpcReceiver(unittest.TestCase):
 
         @Rpc.method
         @asyncio.coroutine
-        def math_add(integer1, integer2):
+        def math_add(integer1, integer2):  # pylint: disable=R0201,W0612
             """
             Simple add function with async.
 
@@ -279,6 +284,7 @@ class TestRpcReceiver(unittest.TestCase):
         cmd = Command("math_add", integer1=1, integer2=2)
         status = Status.ok({'method': 'math_add', 'result': 3})
         status.uuid = cmd.uuid
+
         Server(
             [
                 cmd.to_json(),
@@ -294,7 +300,7 @@ class TestRpcReceiver(unittest.TestCase):
         """
 
         @Rpc.method
-        def math_add(integer1, integer2):
+        def math_add(integer1, integer2):  # pylint: disable=R0201,W0612
             """
             Simple add function with async.
 
@@ -326,7 +332,7 @@ class TestRpcReceiver(unittest.TestCase):
 
         @Rpc.method
         @asyncio.coroutine
-        def math_add(integer1, integer2):
+        def math_add(integer1, integer2):  # pylint: disable=R0201,W0612
             """
             Simple add function with async.
 
@@ -351,18 +357,24 @@ class TestRpcReceiver(unittest.TestCase):
             ],
         ).run()
 
-    def test_rpc_method_raise_exeption(self):
+    def test_rpc_method_raise_exception(self):
         """
         Tests what happens if a rpc method raises an exception
         """
 
         @Rpc.method
         @asyncio.coroutine
-        def foo():
-            raise Exception('bar')
+        def raises_async():  # pylint: disable=R0201,W0612
+            """
+            Simple async rpc function, that raises an Exception.
+            """
+            raise Exception('foo')
 
-        cmd = Command('foo')
-        status = Status.err({'method': 'foo', 'result': str(Exception('bar'))})
+        cmd = Command('raises_async')
+        status = Status.err({
+            'method': 'raises_async',
+            'result': str(Exception('foo'))
+        })
         status.uuid = cmd.uuid
 
         Server(
