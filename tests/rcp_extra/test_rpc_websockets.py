@@ -261,7 +261,7 @@ class TestRpcReceiver(unittest.TestCase):
         super().tearDownClass()
         asyncio.get_event_loop().close()
 
-    def test_math_add_async(self):
+    def test_math_add_async(self):  # pylint: disable=R0201
         """
         Testing simple math add function with async features.
         """
@@ -294,7 +294,7 @@ class TestRpcReceiver(unittest.TestCase):
             ],
         ).run()
 
-    def test_math_add(self):
+    def test_math_add(self):  # pylint: disable=R0201
         """
         Testing simple math add function with async features.
         """
@@ -325,7 +325,7 @@ class TestRpcReceiver(unittest.TestCase):
             ],
         ).run()
 
-    def test_error_close(self):
+    def test_error_close(self):  # pylint: disable=R0201
         """
         Tests if RPC-Receiver doesn't raise an exception its closed early.
         """
@@ -357,7 +357,7 @@ class TestRpcReceiver(unittest.TestCase):
             ],
         ).run()
 
-    def test_rpc_method_raise_exception(self):
+    def test_rpc_method_raise_exception(self):  # pylint: disable=R0201
         """
         Tests what happens if a rpc method raises an exception
         """

@@ -1,6 +1,6 @@
 FROM python:3
 
-LABEL maintainer="bp-team"
+MAINTAINER "https://github.com/bp-flugsimulator"
 
 WORKDIR /usr/src/app
 
