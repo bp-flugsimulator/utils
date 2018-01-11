@@ -101,22 +101,31 @@ class RpcReceiver:
                 status_code = Status.ID_ERR
                 logging.info('Function raise Exception(%s)', result)
 
-            status = Status(status_code,
-                            {'method': cmd.method,
-                             'result': result}, cmd.uuid)
+            return Status(status_code,
+                          {'method': cmd.method,
+                           'result': result}, cmd.uuid)
 
-            try:
-                yield from self.sender_session.send(status.to_json())
-            except err:  # pylint: disable=W0703
-                logging.error('handler failed to send Status(%s)\n%s',
-                              status.to_json(), str(err))
-                exit(1)
+        tasks = set()
 
         try:
+            tasks.add(self.listen_session.recv())
+
             while not self.closed:
                 logging.debug("Listen on command channel.")
-                data = yield from self.listen_session.recv()
-                asyncio.get_event_loop().create_task(handle_message(data))
+
+                (done, tasks) = yield from asyncio.wait(
+                    tasks, return_when=asyncio.FIRST_COMPLETED)
+
+                for future in done:
+                    data = future.result()
+                    logging.debug('Future type: %s', type(future.result()))
+                    if isinstance(data, str):
+                        tasks.add(asyncio.get_event_loop().create_task(
+                            handle_message(future.result())))
+                        tasks.add(self.listen_session.recv())
+                    if isinstance(data, Status):
+                        yield from self.sender_session.send(data.to_json())
+
         except websockets.exceptions.ConnectionClosed as err:
             logging.error('failed to receive message \n%s', str(err))
             if err.code != 1000:
