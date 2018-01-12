@@ -7,8 +7,6 @@ import logging
 
 import websockets
 
-from copy import copy
-
 __all__ = ["RpcReceiver"]
 
 from utils import Command, Rpc, Status
@@ -134,7 +132,7 @@ class RpcReceiver:
                             logging.debug('Received command %s.',
                                           cmd.to_json())
                             tasks[cmd.uuid] = asyncio.get_event_loop(
-                            ).create_task(execute_call(copy(cmd)))
+                            ).create_task(execute_call(cmd))
                             tasks['websocket'] = asyncio.get_event_loop(
                             ).create_task(self.listen_session.recv())
 
