@@ -7,6 +7,8 @@ import logging
 
 import websockets
 
+from copy import copy
+
 __all__ = ["RpcReceiver"]
 
 from utils import Command, Rpc, Status
@@ -82,12 +84,10 @@ class RpcReceiver:
         self.listen_session = yield from self.listen_connection
 
         @asyncio.coroutine
-        def handle_message(data):
+        def execute_call(cmd):
             """
             Handles an incoming message in a seperat task
             """
-            cmd = Command.from_json(data)
-            logging.debug('Received command %s.', cmd.to_json())
             callable_command = Rpc.get(cmd.method)
             logging.debug("Found correct function ... calling.")
 
@@ -95,7 +95,7 @@ class RpcReceiver:
                 result = yield from asyncio.coroutine(callable_command)(
                     **cmd.arguments)
                 status_code = Status.ID_OK
-                logging.debug('Function returned %s.', result)
+                logging.debug('%s returned %s.', cmd.arguments, result)
             except Exception as err:  # pylint: disable=W0703
                 result = str(err)
                 status_code = Status.ID_ERR
@@ -105,29 +105,44 @@ class RpcReceiver:
                           {'method': cmd.method,
                            'result': result}, cmd.uuid)
 
-        tasks = set()
-
         try:
-            tasks.add(self.listen_session.recv())
+            tasks = dict()
+            tasks['websocket'] = asyncio.get_event_loop().create_task(
+                self.listen_session.recv())
 
             while not self.closed:
                 logging.debug("Listen on command channel.")
 
-                (done, tasks) = yield from asyncio.wait(
-                    tasks, return_when=asyncio.FIRST_COMPLETED)
+                (done, _) = yield from asyncio.wait(
+                    set(tasks.values()), return_when=asyncio.FIRST_COMPLETED)
+
+                tasks = dict(
+                    (k, v) for (k, v) in tasks.items() if not v.done())
 
                 for future in done:
                     data = future.result()
                     logging.debug('Future type: %s', type(future.result()))
+
                     if isinstance(data, str):
-                        tasks.add(asyncio.get_event_loop().create_task(
-                            handle_message(future.result())))
-                        tasks.add(self.listen_session.recv())
+                        cmd = Command.from_json(data)
+
+                        if cmd.method == '':
+                            logging.debug('Canceled command with uuid %s.',
+                                          cmd.uuid)
+                            tasks.pop(cmd.uuid).cancel()
+                        else:
+                            logging.debug('Received command %s.',
+                                          cmd.to_json())
+                            tasks[cmd.uuid] = asyncio.get_event_loop(
+                            ).create_task(execute_call(copy(cmd)))
+                            tasks['websocket'] = asyncio.get_event_loop(
+                            ).create_task(self.listen_session.recv())
+
                     if isinstance(data, Status):
                         yield from self.sender_session.send(data.to_json())
 
         except websockets.exceptions.ConnectionClosed as err:
-            logging.error('failed to receive message \n%s', str(err))
+            logging.error('failed to send/receive message \n%s', str(err))
             if err.code != 1000:
                 raise err
         finally:
