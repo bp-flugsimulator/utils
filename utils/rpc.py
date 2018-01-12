@@ -146,6 +146,18 @@ class Command:
         """
         return self.__uuid
 
+    @uuid.setter
+    def uuid(self, uuid):
+        """
+        Setter for __uuid.
+
+        Argument
+        --------
+        uuid: str
+            A hex value representing a universally unique identifier
+        """
+        self.__uuid = uuid
+
     def to_json(self):
         """
         Formats the method into a json string.

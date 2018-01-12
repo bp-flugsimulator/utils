@@ -385,3 +385,49 @@ class TestRpcReceiver(unittest.TestCase):
                 status.to_json(),
             ],
         ).run()
+
+    def test_rpc_method_cancel_method(self):  # pylint: disable=R0201
+        """
+        Tests what happens if you cancel a running method
+        """
+
+        @Rpc.method
+        @asyncio.coroutine
+        def sleep(sec):  # pylint: disable=R0201,W0612
+            """
+            Simple async rpc function, that raises an Exception.
+            """
+            yield from asyncio.sleep(sec)
+
+        sleep_cmd = Command(method='sleep', sec=1)
+        cancel_cmd = Command(method='')
+        cancel_cmd.uuid = sleep_cmd.uuid
+        status = Status.ok({'method': ''})
+        status.uuid = sleep_cmd.uuid
+
+        Server(
+            [
+                sleep_cmd.to_json(),
+                cancel_cmd.to_json(),
+            ],
+            [
+                status.to_json(),
+            ],
+        ).run()
+
+    def test_rpc_method_cancel_unknown(self):  # pylint: disable=R0201
+        """
+        Tests what happens if you cancel an unknown method
+        """
+        cmd = Command(method='')
+        status = Status.err({'method': ''})
+        status.uuid = cmd.uuid
+
+        Server(
+            [
+                cmd.to_json(),
+            ],
+            [
+                status.to_json(),
+            ],
+        ).run()

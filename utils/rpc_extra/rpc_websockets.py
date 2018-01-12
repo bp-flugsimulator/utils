@@ -125,9 +125,24 @@ class RpcReceiver:
                         cmd = Command.from_json(data)
 
                         if cmd.method == '':
-                            logging.debug('Canceled command with uuid %s.',
-                                          cmd.uuid)
-                            tasks.pop(cmd.uuid).cancel()
+                            if cmd.uuid in tasks:
+                                tasks.pop(cmd.uuid).cancel()
+                                status = Status(Status.ID_OK, {'method': ''},
+                                                cmd.uuid)
+                                logging.debug('Canceled command with uuid %s.',
+                                              cmd.uuid)
+                            else:
+                                status = Status(Status.ID_ERR, {'method': ''},
+                                                cmd.uuid)
+                                logging.error(
+                                    "Can't cancel unknown command %s",
+                                    cmd.uuid)
+
+                            yield from self.sender_session.send(
+                                status.to_json())
+                            tasks['websocket'] = asyncio.get_event_loop(
+                            ).create_task(self.listen_session.recv())
+
                         else:
                             logging.debug('Received command %s.',
                                           cmd.to_json())
