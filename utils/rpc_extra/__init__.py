@@ -8,5 +8,5 @@ try:
     from . import rpc_websockets
     from .rpc_websockets import RpcReceiver
     __all__.extend(rpc_websockets.__all__)
-except Exception:  # pylint: disable=W0703
+except ImportError:
     pass
