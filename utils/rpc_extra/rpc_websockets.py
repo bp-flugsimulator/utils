@@ -132,8 +132,7 @@ class RpcReceiver:
                                 Status.ID_OK,
                                 {'method': cmd.method,
                                  'result': result}, cmd.uuid)
-                            logging.debug('Canceled command %s.',
-                                          cmd.method)
+                            logging.debug('Canceled command %s.', cmd.method)
 
                             yield from self.sender_session.send(
                                 status.to_json())
