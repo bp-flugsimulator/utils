@@ -124,19 +124,16 @@ class RpcReceiver:
                     if isinstance(data, str):
                         cmd = Command.from_json(data)
 
-                        if cmd.method == '':
-                            if cmd.uuid in tasks:
-                                tasks.pop(cmd.uuid).cancel()
-                                status = Status(Status.ID_OK, {'method': ''},
-                                                cmd.uuid)
-                                logging.debug('Canceled command with uuid %s.',
-                                              cmd.uuid)
-                            else:
-                                status = Status(Status.ID_ERR, {'method': ''},
-                                                cmd.uuid)
-                                logging.error(
-                                    "Can't cancel unknown command %s",
-                                    cmd.uuid)
+                        if cmd.uuid in tasks:
+                            task = tasks.pop(cmd.uuid)
+                            task.cancel()
+                            result = yield from tasks
+                            status = Status(
+                                Status.ID_OK,
+                                {'method': cmd.method,
+                                 'result': result}, cmd.uuid)
+                            logging.debug('Canceled command %s.',
+                                          cmd.method)
 
                             yield from self.sender_session.send(
                                 status.to_json())
