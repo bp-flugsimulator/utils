@@ -125,28 +125,15 @@ class RpcReceiver:
                         cmd = Command.from_json(data)
 
                         if cmd.uuid in tasks:
-                            task = tasks.pop(cmd.uuid)
-                            task.cancel()
-                            result = yield from tasks
-                            status = Status(
-                                Status.ID_OK,
-                                {'method': cmd.method,
-                                 'result': result}, cmd.uuid)
+                            tasks[cmd.uuid].cancel()
                             logging.debug('Canceled command %s.', cmd.method)
-
-                            yield from self.sender_session.send(
-                                status.to_json())
-                            tasks['websocket'] = asyncio.get_event_loop(
-                            ).create_task(self.listen_session.recv())
-
                         else:
-                            logging.debug('Received command %s.',
-                                          cmd.to_json())
                             tasks[cmd.uuid] = asyncio.get_event_loop(
                             ).create_task(execute_call(cmd))
-                            tasks['websocket'] = asyncio.get_event_loop(
+                            logging.debug('Received command %s.',
+                                          cmd.to_json())
+                        tasks['websocket'] = asyncio.get_event_loop(
                             ).create_task(self.listen_session.recv())
-
                     if isinstance(data, Status):
                         yield from self.sender_session.send(data.to_json())
 

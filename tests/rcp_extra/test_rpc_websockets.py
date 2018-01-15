@@ -396,12 +396,15 @@ class TestRpcReceiver(unittest.TestCase):
             """
             Simple async rpc function, that raises an Exception.
             """
-            yield from asyncio.sleep(sec)
+            try:
+                yield from asyncio.sleep(sec)
+            except asyncio.CancelledError:
+                return -15
 
         sleep_cmd = Command(method='sleep', sec=1)
         cancel_cmd = Command(method='sleep')
         cancel_cmd.uuid = sleep_cmd.uuid
-        status = Status.ok({'method': 'sleep', 'result': None})
+        status = Status.ok({'method': 'sleep', 'result': -15})
         status.uuid = sleep_cmd.uuid
 
         Server(
