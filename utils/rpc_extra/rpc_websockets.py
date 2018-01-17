@@ -93,7 +93,12 @@ class RpcReceiver:
                 result = yield from asyncio.coroutine(callable_command)(
                     **cmd.arguments)
                 status_code = Status.ID_OK
-                logging.debug('%s returned %s.', cmd.arguments, result)
+                logging.debug(
+                    'method %s with args: %s returned %s.',
+                    cmd.method,
+                    cmd.arguments,
+                    result,
+                )
             except Exception as err:  # pylint: disable=W0703
                 result = str(err)
                 status_code = Status.ID_ERR
