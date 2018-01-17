@@ -48,13 +48,12 @@ class Server:
         else:
             loop = asyncio.get_event_loop()
 
-        logging.debug("Fork method: {}".format(
-            multiprocessing.get_start_method()))
-        logging.debug("This Process pid: {}".format(os.getpid()))
+        logging.debug('Fork method: %s', multiprocessing.get_start_method())
+        logging.debug('This Process pid: %s', os.getpid())
         py_file = os.path.join(
             os.path.join(os.getcwd(), "scripts"), "test_server.py")
-        logging.debug("Running python script {} as server.".format(py_file))
-        logging.debug("using {} to execute server.".format(sys.executable))
+        logging.debug('Running python script %s as server.', py_file)
+        logging.debug('using %s to execute server.', sys.executable)
 
         raw_process = asyncio.create_subprocess_exec(
             sys.executable,
@@ -397,35 +396,21 @@ class TestRpcReceiver(unittest.TestCase):
             """
             Simple async rpc function, that raises an Exception.
             """
-            yield from asyncio.sleep(sec)
+            try:
+                yield from asyncio.sleep(sec)
+            except asyncio.CancelledError:
+                return -15
 
         sleep_cmd = Command(method='sleep', sec=1)
-        cancel_cmd = Command(method='')
+        cancel_cmd = Command(method='sleep')
         cancel_cmd.uuid = sleep_cmd.uuid
-        status = Status.ok({'method': ''})
+        status = Status.ok({'method': 'sleep', 'result': -15})
         status.uuid = sleep_cmd.uuid
 
         Server(
             [
                 sleep_cmd.to_json(),
                 cancel_cmd.to_json(),
-            ],
-            [
-                status.to_json(),
-            ],
-        ).run()
-
-    def test_rpc_method_cancel_unknown(self):  # pylint: disable=R0201
-        """
-        Tests what happens if you cancel an unknown method
-        """
-        cmd = Command(method='')
-        status = Status.err({'method': ''})
-        status.uuid = cmd.uuid
-
-        Server(
-            [
-                cmd.to_json(),
             ],
             [
                 status.to_json(),
