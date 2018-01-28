@@ -90,7 +90,7 @@ class RpcReceiver:
             logging.debug("Found correct function ... calling.")
 
             try:
-                result = yield from asyncio.coroutine(callable_command)(
+                result = yield from asyncio.coroutine(callable_command)(uuid=cmd.uuid,
                     **cmd.arguments)
                 status_code = Status.ID_OK
                 logging.debug(

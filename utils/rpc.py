@@ -3,6 +3,7 @@ This module contains rpc classes which allowes
 rpc via websockets. The command executor is a
 client which listens on the websocket.
 """
+from functools import wraps
 
 __all__ = ["ProtocolError", "Rpc"]
 
@@ -36,10 +37,45 @@ def method_wrapper(method_list):
                 raise ValueError(
                     "Only functions with unique names are allowed.")
 
+        @wraps(func)
+        def func_wrapper(*args, **kwargs):
+            if 'uuid' in kwargs:
+                del kwargs['uuid']
+            return func(*args, **kwargs)
+
+        method_list.append(func_wrapper)
+        return func_wrapper
+
+    return method_decorator
+
+def method_with_uuid_wrapper(method_list):
+    """
+    Takes a static argument and returns
+    a function which uses this static
+    argument.
+
+    Returns
+    -------
+        A wrapped function which uses a static
+        argument, without handing it manually.
+    """
+
+    def method_decorator(func):
+        """
+        A wrapper function for method. Which
+        appends the new functions to the internal
+        list.
+        """
+        for fun in method_list:
+            if fun.__name__ == func.__name__:
+                raise ValueError(
+                    "Only functions with unique names are allowed.")
+
         method_list.append(func)
         return func
 
     return method_decorator
+
 
 
 class Rpc:
@@ -50,6 +86,7 @@ class Rpc:
     """
     methods = []
     method = method_wrapper(methods)
+    method_with_uuid = method_with_uuid_wrapper(methods)
 
     @staticmethod
     def get(func):
