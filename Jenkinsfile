@@ -8,7 +8,8 @@ pipeline {
   stages {
     stage('Dependencies') {
       steps {
-        bat 'python install.py --upgrade'
+        bat 'pip install -r requirements_websockets.txt'
+        bat 'pip install -r requirements.txt'
       }
     }
     stage('Test') {
