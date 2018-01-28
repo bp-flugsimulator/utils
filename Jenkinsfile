@@ -1,14 +1,19 @@
 pipeline {
   agent {
-    dockerfile {
-      filename 'Dockerfile'
+    node {
+      label 'windows'
     }
-
+    
   }
   stages {
+    stage('Dependencies') {
+      steps {
+        bat 'python install.py --upgrade'
+      }
+    }
     stage('Test') {
       steps {
-        sh 'python setup.py test'
+        bat 'python setup.py test'
       }
     }
   }
