@@ -185,8 +185,8 @@ class CloseFailServer(Server):
         process.stdin.write("\n".encode())
 
         # run instant in background
-        asyncio.ensure_future(forward_stream_to(process.stdout, sys.stdout))
-        asyncio.ensure_future(forward_stream_to(process.stderr, sys.stdout))
+        yield from forward_stream_to(process.stdout, sys.stdout)
+        yield from forward_stream_to(process.stderr, sys.stdout)
 
         time.sleep(1)
 
