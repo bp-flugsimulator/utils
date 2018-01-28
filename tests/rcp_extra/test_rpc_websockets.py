@@ -81,8 +81,7 @@ class Server:
         time.sleep(1)
 
         recv = RpcReceiver(
-            'ws://127.0.0.1:8750/receive_from_server',
-            'ws://127.0.0.1:8750/send_to_server',
+            'ws://127.0.0.1:8750/commands',
         )
 
         @asyncio.coroutine
@@ -191,8 +190,7 @@ class CloseFailServer(Server):
         time.sleep(1)
 
         recv = RpcReceiver(
-            'ws://127.0.0.1:8750/receive_from_server',
-            'ws://127.0.0.1:8750/send_to_server',
+            'ws://127.0.0.1:8750/commands',
         )
 
         logging.debug("Closing Receiver")

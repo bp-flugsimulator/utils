@@ -72,10 +72,10 @@ def run(send, incoming):
             websocket.
             """
             logging.debug('New connection on path %s', path)
-            if path == '/send_to_server':
-                yield from handle_consumer(websocket)
-            elif path == "/receive_from_server":
-                yield from handle_producer(websocket)
+            #if path == '/send_to_server':
+            yield from handle_consumer(websocket)
+            #elif path == "/receive_from_server":
+            yield from handle_producer(websocket)
             else:
                 ValueError("path not registered.")
 
