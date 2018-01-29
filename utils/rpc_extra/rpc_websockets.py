@@ -84,7 +84,7 @@ class RpcReceiver:
         """
 
         logging.debug("Opened session on %s.", self.url)
-        self.session = yield from self.connection
+        self._session = yield from self.connection
 
         @asyncio.coroutine
         def execute_call(cmd):

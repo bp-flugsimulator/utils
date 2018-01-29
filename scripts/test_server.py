@@ -33,10 +33,16 @@ def run(send, incoming):
         """
 
         @asyncio.coroutine
-        def handle_consumer(websocket):
+        def handler(websocket, path):
             """
-            Handles the incoming messages.
+            Forwards all elements in the queue directly into the
+            websocket.
             """
+            logging.debug('New connection on path %s', path)
+            for elm in send:
+                logging.debug('Send element: %s', elm)
+                yield from websocket.send(elm)
+
             try:
                 while True:
                     logging.debug("Wait for messages.")
@@ -45,39 +51,12 @@ def run(send, incoming):
                     incoming.remove(elm)
                     logging.debug("Removed element.")
 
-                    if not incoming:
-                        break
+                    if not incoming: break
 
             except Exception as err:  # pylint: disable=W0703
                 logging.debug("Error while receiving/removing item.")
                 logging.debug(err)
                 sys.exit(1)
-
-        @asyncio.coroutine
-        def handle_producer(websocket):
-            """
-            Handles the outgoing messages.
-            """
-            for elm in send:
-                logging.debug('Send element: %s', elm)
-                yield from websocket.send(elm)
-
-            while True:
-                yield from asyncio.sleep(1)
-
-        @asyncio.coroutine
-        def handler(websocket, path):
-            """
-            Forwards all elements in the queue directly into the
-            websocket.
-            """
-            logging.debug('New connection on path %s', path)
-            #if path == '/send_to_server':
-            yield from handle_consumer(websocket)
-            #elif path == "/receive_from_server":
-            yield from handle_producer(websocket)
-            else:
-                ValueError("path not registered.")
 
             if not incoming:
                 stop.set_result(None)

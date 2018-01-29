@@ -66,8 +66,8 @@ class Server:
 
         logging.debug("Start child process.")
         process = loop.run_until_complete(raw_process)
-        logging.debug("Child process spawned with pid {}".format(process.pid))
-        logging.debug("This Process pid: {}".format(os.getpid()))
+        logging.debug('Child process spawned with pid %d', process.pid)
+        logging.debug('This Process pid: %d', os.getpid())
 
         logging.debug("Writing json object to stdin.")
         # transfer test set to process
