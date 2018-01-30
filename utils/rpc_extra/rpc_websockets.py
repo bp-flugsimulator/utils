@@ -48,7 +48,7 @@ class RpcReceiver:
 
         Returns
         -------
-            
+            websocket.Connect
         """
         return self._connection
 
@@ -59,7 +59,7 @@ class RpcReceiver:
 
         Returns
         -------
-            
+            websocket.Session
         """
         return self._session
 
