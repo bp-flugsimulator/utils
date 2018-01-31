@@ -95,7 +95,7 @@ class RpcReceiver:
             logging.debug("Found correct function ... calling.")
 
             try:
-                result = yield from asyncio.coroutine(callable_command)(uuid=cmd.uuid,
+                result = yield from asyncio.coroutine(callable_command)(
                     **cmd.arguments)
                 status_code = Status.ID_OK
                 logging.debug(
@@ -143,7 +143,7 @@ class RpcReceiver:
                             logging.debug('Received command %s.',
                                           cmd.to_json())
                         tasks['websocket'] = asyncio.get_event_loop(
-                            ).create_task(self.session.recv())
+                        ).create_task(self.session.recv())
                     if isinstance(data, Status):
                         yield from self.session.send(data.to_json())
 
