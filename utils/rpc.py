@@ -3,7 +3,6 @@ This module contains rpc classes which allowes
 rpc via websockets. The command executor is a
 client which listens on the websocket.
 """
-from functools import wraps
 
 __all__ = ["ProtocolError", "Rpc"]
 
