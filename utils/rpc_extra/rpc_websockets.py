@@ -121,7 +121,7 @@ class RpcReceiver:
             while not self.closed:
                 logging.debug("Listen on command channel.")
 
-                (done, _) = yield from asyncio.wait(
+                done, _ = yield from asyncio.wait(
                     set(tasks.values()), return_when=asyncio.FIRST_COMPLETED)
 
                 tasks = dict(
