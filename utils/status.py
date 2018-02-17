@@ -31,6 +31,12 @@ class Status:
     ID_PAYLOAD = "payload"
     ID_UUID = "uuid"
 
+    def __repr__(self):
+        return str(self)
+
+    def __str__(self):
+        return str(dict(self))
+
     def __init__(self, status, payload, uuid=None):
         if status != Status.ID_OK and status != Status.ID_ERR:
             raise ValueError(
@@ -215,7 +221,7 @@ class Status:
                     }} else {{
                         this._{id_status} = status;
                         this._{id_payload} = payload;
-                        
+
                         //generate uuid
                         let uuid = "", i, random;
                             for (i = 0; i < 32; i++) {{
@@ -247,7 +253,7 @@ class Status:
                 get uuid(){{
                     return this._{id_uuid};
                 }}
-                
+
                 set uuid(id){{
                     this._{id_uuid} = id;
                 }}

@@ -21,6 +21,12 @@ class Command:
     ID_ARGUMENTS = 'arguments'
     ID_UUID = 'uuid'
 
+    def __repr__(self):
+        return str(self)
+
+    def __str__(self):
+        return str(dict(self))
+
     def __init__(self, method, uuid=None, **kwargs):
         self.__method = method
         self.__arguments = kwargs
