@@ -45,5 +45,8 @@ setup(
         "websockets": WEBSOCKETS_REQUIRES,
     },
     test_suite="tests",
-    # tests_require=FULL_REQUIREMENTS,
+    data_files=[("", [
+        "LICENSE", "requirements.txt", "requirements_websockets.txt"
+    ])],
+    include_package_data=True,
 )
