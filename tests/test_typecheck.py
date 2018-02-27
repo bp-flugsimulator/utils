@@ -18,6 +18,15 @@ class TypeCheckTests(unittest.TestCase):
             int,
         )
 
+    def test_type_multi(self):
+        test = "hello world"
+        ensure_type(
+            "test",
+            test,
+            int,
+            str,
+        )
+
     def test_type_success(self):
         test = "hello world"
         ensure_type(
@@ -46,6 +55,16 @@ class TypeCheckTests(unittest.TestCase):
             "test",
             test,
             int,
+        )
+
+    def test_type_array_multi(self):
+        test = [1, "hello world", 3]
+
+        ensure_type_array(
+            "test",
+            test,
+            int,
+            str,
         )
 
     def test_type_array_success(self):
