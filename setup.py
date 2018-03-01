@@ -32,7 +32,7 @@ WEBSOCKETS_REQUIRES = get_requirements("requirements_websockets.txt")
 setup(
     name="bp-flugsimulator-utils",
     description="Utils for the bp-flugsimulator",
-    version="2.1",
+    version="1.0.0",
     scripts=[],
     url="https://github.com/bp-flugsimulator/utils",
     author="bp-flugsimulator",
@@ -45,5 +45,8 @@ setup(
         "websockets": WEBSOCKETS_REQUIRES,
     },
     test_suite="tests",
-    # tests_require=FULL_REQUIREMENTS,
+    data_files=[("", [
+        "LICENSE", "requirements.txt", "requirements_websockets.txt"
+    ])],
+    include_package_data=True,
 )

@@ -11,6 +11,13 @@ class TestCommand(unittest.TestCase):
     Testcases for the Command class.
     """
 
+    def test_repr_str(self):
+        """
+        Test if the __repr__ == __str__.
+        """
+        cmd = Command("Test")
+        self.assertEqual(repr(cmd), str(cmd))
+
     def test_command_with_kwargs(self):
         """
         Uses map arguments.

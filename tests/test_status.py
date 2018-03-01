@@ -11,6 +11,13 @@ class TestStatus(unittest.TestCase):
     Test cases for the class Status.
     """
 
+    def test_repr_str(self):
+        """
+        Test if the __repr__ == __str__.
+        """
+        status = Status.ok("Test")
+        self.assertEqual(repr(status), str(status))
+
     def test_ok_with_string(self):
         """
         Testcase with simple string.
