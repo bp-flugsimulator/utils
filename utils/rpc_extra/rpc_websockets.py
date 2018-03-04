@@ -23,48 +23,55 @@ class RpcReceiver:
     connection send the result of the execution. This means it acts as producer.
     """
 
-    def __init__(self, listen, send):
-        self._listen = listen
-        self._send = send
+    def __init__(self, url):
+        self._url = url
 
-        self.listen_connection = websockets.connect(self.listen)
-        self.sender_connection = websockets.connect(self.send)
-        self.sender_session = None
-        self.listen_session = None
+        self._connection = websockets.connect(self.url)
+        self._session = None
         self.closed = False
 
     @property
-    def send(self):
+    def url(self):
         """
-        Returns the URL where the results are send to.
+        Returns the URL where the results are send to and where the commands are received from.
 
         Returns
         -------
             string
         """
-        return self._send
+        return self._url
 
     @property
-    def listen(self):
+    def connection(self):
         """
-        Returns the URL where the commands are received from.
+        Returns the current connection.
 
         Returns
         -------
-            string
+            websocket.Connect
         """
-        return self._listen
+        return self._connection
+
+    @property
+    def session(self):
+        """
+        Returns the current session.
+
+        Returns
+        -------
+            websocket.Session
+        """
+        return self._session
 
     def close(self):
         """
         Closes all connections.
         """
 
-        logging.debug("Got close call ... closing connections.")
+        logging.debug("Got close call ... closing connection.")
         self.closed = True
         try:
-            self.sender_session.close()
-            self.listen_session.close()
+            self.session.close()
         except Exception as err:  #pylint: disable=W0703
             logging.info('Error while closing websockets.\n%s', str(err))
 
@@ -76,10 +83,8 @@ class RpcReceiver:
         written to the other socket. Same for failed executions.
         """
 
-        logging.debug("Connect to sender.")
-        self.sender_session = yield from self.sender_connection
-        logging.debug("Connect to listener.")
-        self.listen_session = yield from self.listen_connection
+        logging.debug("Opened session on %s.", self.url)
+        self._session = yield from self.connection
 
         @asyncio.coroutine
         def execute_call(cmd):
@@ -111,12 +116,12 @@ class RpcReceiver:
         try:
             tasks = dict()
             tasks['websocket'] = asyncio.get_event_loop().create_task(
-                self.listen_session.recv())
+                self.session.recv())
 
             while not self.closed:
                 logging.debug("Listen on command channel.")
 
-                (done, _) = yield from asyncio.wait(
+                done, _ = yield from asyncio.wait(
                     set(tasks.values()), return_when=asyncio.FIRST_COMPLETED)
 
                 tasks = dict(
@@ -138,9 +143,9 @@ class RpcReceiver:
                             logging.debug('Received command %s.',
                                           cmd.to_json())
                         tasks['websocket'] = asyncio.get_event_loop(
-                            ).create_task(self.listen_session.recv())
+                        ).create_task(self.session.recv())
                     if isinstance(data, Status):
-                        yield from self.sender_session.send(data.to_json())
+                        yield from self.session.send(data.to_json())
 
         except websockets.exceptions.ConnectionClosed as err:
             logging.error('failed to send/receive message \n%s', str(err))
@@ -148,5 +153,4 @@ class RpcReceiver:
                 raise err
         finally:
             logging.debug("Closing connections.")
-            yield from self.listen_session.close()
-            yield from self.sender_session.close()
+            yield from self.session.close()

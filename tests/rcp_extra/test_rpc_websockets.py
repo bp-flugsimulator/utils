@@ -66,8 +66,8 @@ class Server:
 
         logging.debug("Start child process.")
         process = loop.run_until_complete(raw_process)
-        logging.debug("Child process spawned with pid {}".format(process.pid))
-        logging.debug("This Process pid: {}".format(os.getpid()))
+        logging.debug('Child process spawned with pid %d', process.pid)
+        logging.debug('This Process pid: %d', os.getpid())
 
         logging.debug("Writing json object to stdin.")
         # transfer test set to process
@@ -81,8 +81,7 @@ class Server:
         time.sleep(1)
 
         recv = RpcReceiver(
-            'ws://127.0.0.1:8750/receive_from_server',
-            'ws://127.0.0.1:8750/send_to_server',
+            'ws://127.0.0.1:8750/commands',
         )
 
         @asyncio.coroutine
@@ -191,15 +190,31 @@ class CloseFailServer(Server):
         time.sleep(1)
 
         recv = RpcReceiver(
-            'ws://127.0.0.1:8750/receive_from_server',
-            'ws://127.0.0.1:8750/send_to_server',
+            'ws://127.0.0.1:8750/commands',
         )
 
+        logging.debug("Ensuring future run")
+
+        @asyncio.coroutine
+        def rcv_run_wrapper():
+            """
+            Coroutine to capture the ConnectionClosed Exception.
+            """
+            try:
+                yield from recv.run()
+            except websockets.exceptions.ConnectionClosed:
+                logging.debug('catched ConnectionClosed Exception as excepted.')
+
+        @asyncio.coroutine
+        def wait_for_end():
+            """
+            Coroutine to trigger execution of rcv_run_wrapper() and process.wait()
+            """
+            yield from asyncio.wait([rcv_run_wrapper(), process.wait(), asyncio.sleep(0.1)])
+
+        loop.run_until_complete(wait_for_end())
         logging.debug("Closing Receiver")
         recv.close()
-        logging.debug("Send SIGTERM to child process.")
-        process.terminate()
-        logging.debug("Wait for process to close.")
         loop.run_until_complete(process.wait())
 
 
@@ -324,27 +339,31 @@ class TestRpcReceiver(unittest.TestCase):
             ],
         ).run()
 
-    def test_error_close(self):  # pylint: disable=R0201
+    def test_error_close_early(self):  # pylint: disable=R0201
         """
         Tests if RPC-Receiver doesn't raise an exception its closed early.
+        """
+        recv = RpcReceiver(
+            'ws://127.0.0.1:8750/commands',
+        )
+        recv.close()
+
+
+    def test_error_close(self):  # pylint: disable=R0201
+        """
+        Tests if RPC-Receiver doesn't raise an exception if closed during execution.
         """
 
         @Rpc.method
         @asyncio.coroutine
-        def math_add(integer1, integer2):  # pylint: disable=R0201,W0612
+        def async_sleep():  # pylint: disable=R0201,W0612
             """
-            Simple add function with async.
-
-            Arguments
-            ---------
-                integer1: first operand
-                integer2: second operand
+            Simple function that sleeps.
             """
-            res = (integer1 + integer2)
-            return res
+            yield from asyncio.sleep(10)
 
-        cmd = Command("math_add", integer1=1, integer2=2)
-        status = Status.ok({'method': 'math_add', 'result': 3})
+        cmd = Command("async_sleep", integer1=1, integer2=2)
+        status = Status.ok({'method': 'async_sleep', 'result': ''})
         status.uuid = cmd.uuid
 
         CloseFailServer(
@@ -355,6 +374,7 @@ class TestRpcReceiver(unittest.TestCase):
                 status.to_json(),
             ],
         ).run()
+
 
     def test_rpc_method_raise_exception(self):  # pylint: disable=R0201
         """

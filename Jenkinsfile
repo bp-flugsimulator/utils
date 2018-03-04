@@ -1,14 +1,20 @@
 pipeline {
   agent {
-    dockerfile {
-      filename 'Dockerfile'
+    node {
+      label 'windows'
     }
-
+    
   }
   stages {
+    stage('Dependencies') {
+      steps {
+        bat 'pip install -r requirements_websockets.txt'
+        bat 'pip install -r requirements.txt'
+      }
+    }
     stage('Test') {
       steps {
-        sh 'python setup.py test'
+        bat 'python setup.py test'
       }
     }
   }
