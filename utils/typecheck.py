@@ -17,7 +17,8 @@ def ensure_type(name, var, *types):
         if not isinstance(ty, type):
             raise ValueError(
                 "The given value {} in *types is not a type. (found {})".
-                format(ty, type(ty).__name__))
+                format(ty,
+                       type(ty).__name__))
 
         if isinstance(var, ty):
             return
@@ -43,7 +44,8 @@ def ensure_type_array(name, array, *types):
         if not isinstance(ty, type):
             raise ValueError(
                 "The given value {} in *types is not a type. (found {})".
-                format(ty, type(ty).__name__))
+                format(ty,
+                       type(ty).__name__))
 
     errors = []
 
