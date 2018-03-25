@@ -81,6 +81,7 @@ class RpcReceiver:
         """
         Coroutine that tries to reconnect to self.url 6 times.
         """
+        error = None
         for time in range(6):
             logging.debug('Waiting for %s seconds to reconnect.', pow(2, time))
             yield from asyncio.sleep(pow(2, time))
@@ -88,9 +89,12 @@ class RpcReceiver:
                 self._connection = websockets.connect(self.url)
                 self._session = yield from self.connection
                 logging.debug('Successfully reconnected to %s', self.url)
-                break
-            except ConnectionRefusedError:
+                return
+            except ConnectionRefusedError as err:
+                error = err
                 logging.debug('Failed to reconnect to %s.', self.url)
+
+        raise error
 
     @asyncio.coroutine
     def run(self):
