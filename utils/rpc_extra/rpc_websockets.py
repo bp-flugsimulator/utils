@@ -146,6 +146,7 @@ class RpcReceiver:
                     (k, v) for (k, v) in tasks.items() if not v.done())
 
                 for future in done:
+                    data = None
                     try:
                         data = future.result()
                     except websockets.exceptions.ConnectionClosed as err:
@@ -155,6 +156,7 @@ class RpcReceiver:
                             yield from self.reconnect()
                             tasks['websocket'] = asyncio.get_event_loop(
                             ).create_task(self.session.recv())
+                            break
                         else:
                             self.closed = True
                             break
