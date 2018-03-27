@@ -76,6 +76,26 @@ class RpcReceiver:
             logging.info('Error while closing websockets.\n%s', str(err))
 
     @asyncio.coroutine
+    def reconnect(self):
+        """
+        Coroutine that tries to reconnect to self.url 6 times.
+        """
+        error = ConnectionRefusedError()
+        for time in range(6):
+            logging.debug('Waiting for %s seconds to reconnect.', pow(2, time))
+            yield from asyncio.sleep(pow(2, time))
+            try:
+                self._connection = websockets.connect(self.url)
+                self._session = yield from self.connection
+                logging.debug('Successfully reconnected to %s', self.url)
+                return
+            except ConnectionRefusedError as err:
+                error = err
+                logging.debug('Failed to reconnect to %s.', self.url)
+
+        raise error
+
+    @asyncio.coroutine
     def run(self):
         """
         Listens on the receiver socket and executes the incoming commands. If
@@ -109,9 +129,10 @@ class RpcReceiver:
                 status_code = Status.ID_ERR
                 logging.info('Function raise Exception(%s)', result)
 
-            return Status(status_code,
-                          {'method': cmd.method,
-                           'result': result}, cmd.uuid)
+            return Status(status_code, {
+                'method': cmd.method,
+                'result': result
+            }, cmd.uuid)
 
         try:
             tasks = dict()
@@ -128,8 +149,22 @@ class RpcReceiver:
                     (k, v) for (k, v) in tasks.items() if not v.done())
 
                 for future in done:
-                    data = future.result()
-                    logging.debug('Future type: %s', type(future.result()))
+                    data = None
+                    try:
+                        data = future.result()
+                    except websockets.exceptions.ConnectionClosed as err:
+                        if err.code != 1000:
+                            logging.error('failed to receive message \n%s',
+                                          str(err))
+                            yield from self.reconnect()
+                            tasks['websocket'] = asyncio.get_event_loop(
+                            ).create_task(self.session.recv())
+                            break
+                        else:
+                            self.closed = True
+                            break
+
+                    logging.debug('Future type: %s', type(data))
 
                     if isinstance(data, str):
                         cmd = Command.from_json(data)
@@ -145,12 +180,17 @@ class RpcReceiver:
                         tasks['websocket'] = asyncio.get_event_loop(
                         ).create_task(self.session.recv())
                     if isinstance(data, Status):
-                        yield from self.session.send(data.to_json())
+                        try:
+                            yield from self.session.send(data.to_json())
+                        except websockets.exceptions.ConnectionClosed as err:
+                            if err.code != 1000:
+                                logging.error('failed to send message \n%s',
+                                              str(err))
+                                yield from self.reconnect()
+                                yield from self.session.send(data.to_json())
+                            else:
+                                self.closed = True
 
-        except websockets.exceptions.ConnectionClosed as err:
-            logging.error('failed to send/receive message \n%s', str(err))
-            if err.code != 1000:
-                raise err
         finally:
             logging.debug("Closing connections.")
             yield from self.session.close()
